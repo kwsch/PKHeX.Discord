@@ -6,6 +6,7 @@ using Discord;
 using Discord.Commands;
 using PKHeX.Core;
 using PKHeX.Drawing;
+using Image = System.Drawing.Image;
 using ImageFormat = System.Drawing.Imaging.ImageFormat;
 
 namespace PKHeX.Discord
@@ -16,8 +17,8 @@ namespace PKHeX.Discord
         private static readonly Font font = new Font("Microsoft Sans Serif", 8.25f);
 
         [Command("qr")]
-        [Summary("Converts the pkm to QR.")]
-        public async Task LegalityCheckVerbose()
+        [Summary("Converts the pkm(s) to QR.")]
+        public async Task GenerateQRCodes()
         {
             var attachments = Context.Message.Attachments;
             foreach (var att in attachments)
@@ -26,7 +27,7 @@ namespace PKHeX.Discord
 
         private async Task QRPKM(IAttachment att)
         {
-            if (att.Size > 0x158)
+            if (!PKX.IsPKM(att.Size))
             {
                 await ReplyAsync($"{att.Filename}: Invalid size.").ConfigureAwait(false);
                 return;
@@ -43,15 +44,26 @@ namespace PKHeX.Discord
                 return;
             }
 
-            string[] r = pkm.GetQRLines();
-            SpriteUtil.Initialize(pkm.Format >= 8 || pkm is PB7);
-            var icon = pkm.Sprite();
-            var qr = QREncode.GenerateQRCode(pkm);
-            var tag = $"PKHeX Discord - {DateTime.Now:yy/MM/dd} ({pkm.GetType().Name})";
-            var finalQR = QRImageUtil.GetQRImageExtended(font, qr, icon, Math.Max(qr.Width, 370), qr.Height + 50, r, tag);
+            var finalQR = GetQR(pkm);
             const string fn = "tmp.png";
             finalQR.Save(fn, ImageFormat.Png);
-            await Context.Channel.SendFileAsync(fn, "Here's the QR for `" + att.Filename.Replace("`", "\\`") + "`!").ConfigureAwait(false);
+            var msg = $"Here's the QR for `{att.Filename.Replace("`", "\\`")}`!";
+            await Context.Channel.SendFileAsync(fn, msg).ConfigureAwait(false);
+        }
+
+        private static Bitmap GetQR(PKM pkm)
+        {
+            var icon = GetSprite(pkm);
+            var qr = pkm is PK7 pk7 ? QREncode.GenerateQRCode7(pk7) : QREncode.GenerateQRCode(pkm);
+            var lines = pkm.GetQRLines();
+            var tag = $"PKHeX Discord - {DateTime.Now:yy/MM/dd} ({pkm.GetType().Name})";
+            return QRImageUtil.GetQRImageExtended(font, qr, icon, Math.Max(qr.Width, 370), qr.Height + 56, lines, tag);
+        }
+
+        private static Image GetSprite(PKM pkm)
+        {
+            SpriteUtil.Initialize(pkm.Format >= 8 || pkm is PB7);
+            return pkm.Sprite();
         }
     }
 }

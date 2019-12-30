@@ -30,7 +30,7 @@ namespace PKHeX.Discord
 
         private async Task LegalityCheck(IAttachment att, bool verbose)
         {
-            if (att.Size > 0x158)
+            if (!PKX.IsPKM(att.Size))
             {
                 await ReplyAsync($"{att.Filename}: Invalid size.").ConfigureAwait(false);
                 return;
