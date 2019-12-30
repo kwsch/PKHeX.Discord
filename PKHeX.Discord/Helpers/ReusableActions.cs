@@ -10,7 +10,7 @@ namespace PKHeX.Discord
 {
     public static class ReusableActions
     {
-        public static async Task SendPKMToChannelAsync(ISocketMessageChannel channel, PKM pkm, string msg = "")
+        public static async Task SendPKMAsync(this ISocketMessageChannel channel, PKM pkm, string msg = "")
         {
             var tmp = Path.Combine(Path.GetTempPath(), Util.CleanFileName(pkm.FileName));
             File.WriteAllBytes(tmp, pkm.DecryptedPartyData);
@@ -18,7 +18,7 @@ namespace PKHeX.Discord
             File.Delete(tmp);
         }
 
-        public static async Task SendImageToChannelAsync(ISocketMessageChannel channel, Image finalQR, string msg = "")
+        public static async Task SendImageAsync(this ISocketMessageChannel channel, Image finalQR, string msg = "")
         {
             const string fn = "tmp.png";
             finalQR.Save(fn, ImageFormat.Png);

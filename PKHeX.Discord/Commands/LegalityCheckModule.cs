@@ -27,29 +27,19 @@ namespace PKHeX.Discord
 
         private async Task LegalityCheck(IAttachment att, bool verbose)
         {
-            var sanitized = $"`{att.Filename.Replace("`", "\\`")}`";
-            if (!PKX.IsPKM(att.Size))
+            var download = await NetUtil.DownloadPKMAsync(att).ConfigureAwait(false);
+            if (!download.Success)
             {
-                await ReplyAsync($"{sanitized}: Invalid size.").ConfigureAwait(false);
+                await ReplyAsync(download.ErrorMessage).ConfigureAwait(false);
                 return;
             }
 
-            string url = att.Url;
-
-            // Download the resource and load the bytes into a buffer.
-            byte[] data = await NetUtil.DownloadFromUrlAsync(url).ConfigureAwait(false);
-            var pkm = PKMConverter.GetPKMfromBytes(data, sanitized.Contains("pk6") ? 6 : 7);
-            if (pkm == null)
-            {
-                await ReplyAsync($"{sanitized}: Invalid pkm attachment.").ConfigureAwait(false);
-                return;
-            }
-
+            var pkm = download.Data;
             var la = new LegalityAnalysis(pkm);
             var builder = new EmbedBuilder
             {
                 Color = la.Valid ? Color.Green : Color.Red,
-                Description = $"Legality Report for {sanitized}:"
+                Description = $"Legality Report for {download.SanitizedFileName}:"
             };
 
             builder.AddField(x =>

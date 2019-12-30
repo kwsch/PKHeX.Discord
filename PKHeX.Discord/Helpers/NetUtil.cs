@@ -1,5 +1,7 @@
 ﻿using System.Net;
 using System.Threading.Tasks;
+using Discord;
+using PKHeX.Core;
 
 namespace PKHeX.Discord
 {
@@ -11,5 +13,38 @@ namespace PKHeX.Discord
         {
             return await webClient.DownloadDataTaskAsync(url).ConfigureAwait(false);
         }
+
+        public static async Task<Download<PKM>> DownloadPKMAsync(IAttachment att)
+        {
+            var result = new Download<PKM> { SanitizedFileName = $"`{att.Filename.Replace("`", "\\`")}`" };
+            if (!PKX.IsPKM(att.Size))
+            {
+                result.ErrorMessage = $"{result.SanitizedFileName}: Invalid size.";
+                return result;
+            }
+
+            string url = att.Url;
+
+            // Download the resource and load the bytes into a buffer.
+            var buffer = await DownloadFromUrlAsync(url).ConfigureAwait(false);
+            var pkm = PKMConverter.GetPKMfromBytes(buffer, result.SanitizedFileName.Contains("pk6") ? 6 : 7);
+            if (pkm == null)
+            {
+                result.ErrorMessage = $"{result.SanitizedFileName}: Invalid pkm attachment.";
+                return result;
+            }
+
+            result.Data = pkm;
+            result.Success = true;
+            return result;
+        }
+    }
+
+    public sealed class Download<T>
+    {
+        public bool Success;
+        public T Data;
+        public string SanitizedFileName;
+        public string ErrorMessage;
     }
 }
