@@ -15,6 +15,7 @@ namespace PKHeX.Discord
         }
 
         [Command("help")]
+        [Summary("Lists available commands.")]
         public async Task HelpAsync()
         {
             var builder = new EmbedBuilder
@@ -43,10 +44,11 @@ namespace PKHeX.Discord
                 });
             }
 
-            await ReplyAsync("", false, builder.Build()).ConfigureAwait(false);
+            await ReplyAsync("Help has arrived!", false, builder.Build()).ConfigureAwait(false);
         }
 
         [Command("help")]
+        [Summary("Lists information about a specific command.")]
         public async Task HelpAsync(string command)
         {
             var result = _service.Search(Context, command);
@@ -76,7 +78,7 @@ namespace PKHeX.Discord
                 });
             }
 
-            await ReplyAsync(string.Empty, false, builder.Build()).ConfigureAwait(false);
+            await ReplyAsync("Help has arrived!", false, builder.Build()).ConfigureAwait(false);
         }
     }
 }

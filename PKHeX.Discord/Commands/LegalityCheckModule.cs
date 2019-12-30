@@ -1,15 +1,12 @@
-﻿using System.Net;
-using System.Threading.Tasks;
+﻿using System.Threading.Tasks;
 using Discord;
 using Discord.Commands;
 using PKHeX.Core;
 
 namespace PKHeX.Discord
 {
-    public class Legality : ModuleBase<SocketCommandContext>
+    public class LegalityCheckModule : ModuleBase<SocketCommandContext>
     {
-        private static readonly WebClient webClient = new WebClient();
-
         [Command("lc"), Alias("check", "validate", "verify")]
         [Summary("Verifies the attachment for legality.")]
         public async Task LegalityCheck()
@@ -30,20 +27,21 @@ namespace PKHeX.Discord
 
         private async Task LegalityCheck(IAttachment att, bool verbose)
         {
+            var sanitized = $"`{att.Filename.Replace("`", "\\`")}`";
             if (!PKX.IsPKM(att.Size))
             {
-                await ReplyAsync($"{att.Filename}: Invalid size.").ConfigureAwait(false);
+                await ReplyAsync($"{sanitized}: Invalid size.").ConfigureAwait(false);
                 return;
             }
 
             string url = att.Url;
 
             // Download the resource and load the bytes into a buffer.
-            byte[] buffer = await webClient.DownloadDataTaskAsync(url).ConfigureAwait(false);
-            var pkm = PKMConverter.GetPKMfromBytes(buffer);
+            byte[] data = await NetUtil.DownloadFromUrlAsync(url).ConfigureAwait(false);
+            var pkm = PKMConverter.GetPKMfromBytes(data, sanitized.Contains("pk6") ? 6 : 7);
             if (pkm == null)
             {
-                await ReplyAsync($"{att.Filename}: Invalid pkm attachment.").ConfigureAwait(false);
+                await ReplyAsync($"{sanitized}: Invalid pkm attachment.").ConfigureAwait(false);
                 return;
             }
 
@@ -51,7 +49,7 @@ namespace PKHeX.Discord
             var builder = new EmbedBuilder
             {
                 Color = la.Valid ? Color.Green : Color.Red,
-                Description = $"Legality Report for {att.Filename}:"
+                Description = $"Legality Report for {sanitized}:"
             };
 
             builder.AddField(x =>

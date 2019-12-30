@@ -1,7 +1,6 @@
-﻿using System.IO;
-using System.Net;
-using System.Threading;
+﻿using System.Threading;
 using System.Threading.Tasks;
+
 using Discord;
 using Discord.Commands;
 using PKHeX.Core;
@@ -9,11 +8,9 @@ using PKHeX.Core.AutoMod;
 
 namespace PKHeX.Discord
 {
-    public class Legalizer : ModuleBase<SocketCommandContext>
+    public class LegalizerModule : ModuleBase<SocketCommandContext>
     {
-        private static readonly WebClient webClient = new WebClient();
-
-        static Legalizer()
+        static LegalizerModule()
         {
             Task.Run(() => {
                 var lang = Thread.CurrentThread.CurrentCulture.TwoLetterISOLanguageName.Substring(0, 2);
@@ -28,7 +25,7 @@ namespace PKHeX.Discord
         }
 
         [Command("legalize"), Alias("alm")]
-        [Summary("Tries to legalize the attached pkm.")]
+        [Summary("Tries to legalize the attached pkm data.")]
         public async Task LegalizeAsync()
         {
             var attachments = Context.Message.Attachments;
@@ -48,7 +45,7 @@ namespace PKHeX.Discord
             string url = att.Url;
 
             // Download the resource and load the bytes into a buffer.
-            byte[] buffer = await webClient.DownloadDataTaskAsync(url).ConfigureAwait(false);
+            var buffer = await NetUtil.DownloadFromUrlAsync(url).ConfigureAwait(false);
             var pkm = PKMConverter.GetPKMfromBytes(buffer, sanitized.Contains("pk6") ? 6 : 7);
             if (pkm == null)
             {
@@ -71,11 +68,9 @@ namespace PKHeX.Discord
 
             legal.RefreshChecksum();
 
-            var tmp = Path.Combine(Path.GetTempPath(), Util.CleanFileName(legal.FileName));
-            File.WriteAllBytes(tmp, legal.DecryptedPartyData);
             var msg = $"Here's your legalized PKM for {sanitized}!";
-            await Context.Channel.SendFileAsync(tmp, msg).ConfigureAwait(false);
-            File.Delete(tmp);
+            var channel = Context.Channel;
+            await ReusableActions.SendPKMToChannelAsync(channel, legal, msg).ConfigureAwait(false);
         }
     }
 }
