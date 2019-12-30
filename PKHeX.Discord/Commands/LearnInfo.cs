@@ -8,7 +8,7 @@ namespace PKHeX.Discord
 {
     public class LearnInfo : ModuleBase<SocketCommandContext>
     {
-        [Command("learn")]
+        [Command("learn"), Alias("canlearn")]
         [Summary("Checks if the pkm can learn all of the moves asked.")]
         public async Task LearnAsync([Remainder]string context)
         {
@@ -21,7 +21,7 @@ namespace PKHeX.Discord
             await ReplyAsync(msg).ConfigureAwait(false);
         }
 
-        [Command("encounter")]
+        [Command("encounter"), Alias("find")]
         [Summary("Returns a list of encounter locations where a pkm can be found, to learn all of the moves asked.")]
         public async Task EncounterAsync([Remainder]string context)
         {

@@ -10,7 +10,7 @@ namespace PKHeX.Discord
     {
         private static readonly WebClient webClient = new WebClient();
 
-        [Command("lc")]
+        [Command("lc"), Alias("check", "validate", "verify")]
         [Summary("Verifies the attachment for legality.")]
         public async Task LegalityCheck()
         {
@@ -19,7 +19,7 @@ namespace PKHeX.Discord
                 await LegalityCheck(att, false).ConfigureAwait(false);
         }
 
-        [Command("lcv")]
+        [Command("lcv"), Alias("verbose")]
         [Summary("Verifies the attachment for legality with a verbose output.")]
         public async Task LegalityCheckVerbose()
         {
@@ -48,8 +48,20 @@ namespace PKHeX.Discord
             }
 
             var la = new LegalityAnalysis(pkm);
-            await ReplyAsync($"Legality Report for {att.Filename}:").ConfigureAwait(false);
-            await ReplyAsync($"{la.Report(verbose)}").ConfigureAwait(false);
+            var builder = new EmbedBuilder
+            {
+                Color = la.Valid ? Color.Green : Color.Red,
+                Description = $"Legality Report for {att.Filename}:"
+            };
+
+            builder.AddField(x =>
+            {
+                x.Name = la.Valid ? "Valid" : "Invalid";
+                x.Value = la.Report(verbose);
+                x.IsInline = false;
+            });
+
+            await ReplyAsync("Here's the legality report!", false, builder.Build()).ConfigureAwait(false);
         }
     }
 }
