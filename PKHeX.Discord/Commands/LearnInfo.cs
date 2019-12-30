@@ -31,7 +31,7 @@ namespace PKHeX.Discord
             var builder = new EmbedBuilder
             {
                 Color = new Color(114, 137, 218),
-                Description = $"Here's where you can find {species}:"
+                Description = "Encounters:"
             };
 
             var summary = EncounterLearn.GetLearnSummary(species, args.Skip(1));
@@ -90,7 +90,7 @@ namespace PKHeX.Discord
                 return;
             }
 
-            await ReplyAsync(null, false, builder.Build()).ConfigureAwait(false);
+            await ReplyAsync($"Here's where you can find {species}:", false, builder.Build()).ConfigureAwait(false);
         }
     }
 }
