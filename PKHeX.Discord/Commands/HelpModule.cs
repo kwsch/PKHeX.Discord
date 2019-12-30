@@ -20,7 +20,7 @@ namespace PKHeX.Discord
             var builder = new EmbedBuilder
             {
                 Color = new Color(114, 137, 218),
-                Description = "These are the commands you can use"
+                Description = "These are the commands you can use:"
             };
 
             foreach (var module in _service.Modules)
@@ -60,7 +60,7 @@ namespace PKHeX.Discord
             var builder = new EmbedBuilder
             {
                 Color = new Color(114, 137, 218),
-                Description = $"Here are some commands like **{command}**"
+                Description = $"Here are some commands like **{command}**:"
             };
 
             foreach (var match in result.Commands)
@@ -70,13 +70,13 @@ namespace PKHeX.Discord
                 builder.AddField(x =>
                 {
                     x.Name = string.Join(", ", cmd.Aliases);
-                    x.Value = $"Parameters: {string.Join(", ", cmd.Parameters.Select(p => p.Name))}\n" +
+                    x.Value = $"Parameters: {(cmd.Parameters.Count == 0 ? "None" : string.Join(", ", cmd.Parameters.Select(p => p.Name)))}\n" +
                               $"Summary: {cmd.Summary}";
                     x.IsInline = false;
                 });
             }
 
-            await ReplyAsync("", false, builder.Build()).ConfigureAwait(false);
+            await ReplyAsync(string.Empty, false, builder.Build()).ConfigureAwait(false);
         }
     }
 }
