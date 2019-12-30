@@ -90,7 +90,11 @@ namespace PKHeX.Discord
                 return;
             }
 
-            await ReplyAsync($"Here's where you can find {species}:", false, builder.Build()).ConfigureAwait(false);
+            var response = $"Here's where you can find {species}";
+            if (args.Length > 1)
+                response += $" with {string.Join(", ", args.Skip(1))}";
+
+            await ReplyAsync(response + ":", false, builder.Build()).ConfigureAwait(false);
         }
     }
 }
