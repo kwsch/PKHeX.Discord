@@ -38,6 +38,7 @@ namespace PKHeX.Discord
             var sb = new StringBuilder();
             var key = string.Empty;
             bool any = false;
+            bool capped = false;
             foreach (var line in summary)
             {
                 if (line.StartsWith("="))
@@ -46,19 +47,41 @@ namespace PKHeX.Discord
                     if (sb.Length > 0)
                     {
                         var key1 = key;
+                        var msg = sb.ToString();
                         builder.AddField(x =>
                         {
                             x.Name = key1;
-                            x.Value = sb.ToString();
+                            x.Value = msg;
                             x.IsInline = false;
                         });
                     }
                     key = line.Replace("=", "");
+                    capped = false;
                     sb.Clear();
                     continue;
                 }
 
-                sb.AppendLine(line);
+                if (sb.Length > 850 && !capped)
+                {
+                    capped = true;
+                    sb.AppendLine( "...and more! Too long to show all.");
+                }
+                else if (!capped)
+                {
+                    sb.AppendLine(line);
+                }
+            }
+
+            if (sb.Length > 0)
+            {
+                var key1 = key;
+                var msg = sb.ToString();
+                builder.AddField(x =>
+                {
+                    x.Name = key1;
+                    x.Value = msg;
+                    x.IsInline = false;
+                });
             }
 
             if (!any)
