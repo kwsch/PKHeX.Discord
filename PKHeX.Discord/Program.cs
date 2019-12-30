@@ -17,6 +17,7 @@ namespace PKHeX.Discord
 
         // Keep the CommandService and DI container around for use with commands.
         // These two types require you install the Discord.Net.Commands package.
+        private const char _prefix = '.';
         private readonly CommandService _commands;
         private readonly IServiceProvider _services;
 
@@ -144,7 +145,7 @@ namespace PKHeX.Discord
             // you want to prefix your commands with.
             // Uncomment the second half if you also want
             // commands to be invoked by mentioning the bot instead.
-            if (msg.HasCharPrefix('!', ref pos) /* || msg.HasMentionPrefix(_client.CurrentUser, ref pos) */)
+            if (msg.HasCharPrefix(_prefix, ref pos) /* || msg.HasMentionPrefix(_client.CurrentUser, ref pos) */)
             {
                 // Create a Command Context.
                 var context = new SocketCommandContext(_client, msg);
