@@ -58,7 +58,7 @@ namespace PKHeX.Discord
 
             legal.RefreshChecksum();
 
-            var msg = $"Here's your legalized PKM for {download.SanitizedFileName}!";
+            var msg = $"Here's your legalized PKM for {download.SanitizedFileName}!\n{ReusableActions.GetFormattedShowdownText(legal)}";
             await Context.Channel.SendPKMAsync(legal, msg).ConfigureAwait(false);
         }
     }

@@ -127,41 +127,63 @@ namespace PKHeX.Discord
             // Note that the first one is 'Modules' (plural) and the second is 'Module' (singular).
 
             // Subscribe a handler to see if a message invokes a command.
-            _client.MessageReceived += HandleCommandAsync;
+            _client.MessageReceived += HandleMessageAsync;
         }
 
-        private async Task HandleCommandAsync(SocketMessage arg)
+        private async Task HandleMessageAsync(SocketMessage arg)
         {
             // Bail out if it's a System Message.
             if (!(arg is SocketUserMessage msg))
                 return;
 
             // We don't want the bot to respond to itself or other bots.
-            if (msg.Author.Id == _client.CurrentUser.Id || msg.Author.IsBot) return;
+            if (msg.Author.Id == _client.CurrentUser.Id || msg.Author.IsBot)
+                return;
 
             // Create a number to track where the prefix ends and the command begins
             int pos = 0;
-            // Replace the '!' with whatever character
-            // you want to prefix your commands with.
-            // Uncomment the second half if you also want
-            // commands to be invoked by mentioning the bot instead.
-            if (msg.HasCharPrefix(_prefix, ref pos) /* || msg.HasMentionPrefix(_client.CurrentUser, ref pos) */)
+            if (msg.HasCharPrefix(_prefix, ref pos))
             {
-                // Create a Command Context.
-                var context = new SocketCommandContext(_client, msg);
-
-                // Execute the command. (result does not indicate a return value, 
-                // rather an object stating if the command executed successfully).
-                await Log(new LogMessage(LogSeverity.Info, "Command", $"Executing command from {msg.Author.Username}. Content: {msg}")).ConfigureAwait(false);
-                var result = await _commands.ExecuteAsync(context, pos, _services).ConfigureAwait(false);
-
-                // Uncomment the following lines if you want the bot
-                // to send a message if it failed.
-                // This does not catch errors from commands with 'RunMode.Async',
-                // subscribe a handler for '_commands.CommandExecuted' to see those.
-                if (!result.IsSuccess && result.Error != CommandError.UnknownCommand)
-                    await msg.Channel.SendMessageAsync(result.ErrorReason).ConfigureAwait(false);
+                bool handled = await TryHandleCommandAsync(msg, pos).ConfigureAwait(false);
+                if (handled)
+                    return;
             }
+
+            await TryHandleMessageAsync(msg).ConfigureAwait(false);
+        }
+
+        private bool ConvertPKMToShowdownSet { get; } = true;
+
+        private async Task TryHandleMessageAsync(SocketMessage msg)
+        {
+            // should this be a service?
+            if (msg.Attachments.Count > 0 && ConvertPKMToShowdownSet)
+            {
+                foreach (var att in msg.Attachments)
+                    await msg.Channel.RepostPKMAsShowdownAsync(att).ConfigureAwait(false);
+            }
+        }
+
+        private async Task<bool> TryHandleCommandAsync(SocketUserMessage msg, int pos)
+        {
+            // Create a Command Context.
+            var context = new SocketCommandContext(_client, msg);
+
+            // Execute the command. (result does not indicate a return value, 
+            // rather an object stating if the command executed successfully).
+            await Log(new LogMessage(LogSeverity.Info, "Command", $"Executing command from {msg.Author.Username}. Content: {msg}")).ConfigureAwait(false);
+            var result = await _commands.ExecuteAsync(context, pos, _services).ConfigureAwait(false);
+
+            if (result.Error == CommandError.UnknownCommand)
+                return false;
+
+            // Uncomment the following lines if you want the bot
+            // to send a message if it failed.
+            // This does not catch errors from commands with 'RunMode.Async',
+            // subscribe a handler for '_commands.CommandExecuted' to see those.
+            if (!result.IsSuccess)
+                await msg.Channel.SendMessageAsync(result.ErrorReason).ConfigureAwait(false);
+            return true;
         }
     }
 }
