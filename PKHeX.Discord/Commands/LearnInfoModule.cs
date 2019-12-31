@@ -72,6 +72,15 @@ namespace PKHeX.Discord
                 }
             }
 
+            if (!any)
+            {
+                var fail = $"Sorry, can't find {species}";
+                if (args.Length > 1)
+                    fail += $" with {string.Join(", ", args.Skip(1))}.";
+                await ReplyAsync(fail).ConfigureAwait(false);
+                return;
+            }
+
             if (sb.Length > 0)
             {
                 var key1 = key;
@@ -84,15 +93,9 @@ namespace PKHeX.Discord
                 });
             }
 
-            if (!any)
-            {
-                await ReplyAsync("None").ConfigureAwait(false);
-                return;
-            }
-
             var response = $"Here's where you can find {species}";
             if (args.Length > 1)
-                response += $" with {string.Join(", ", args.Skip(1))}";
+                response += $" with {string.Join(", ", args.Skip(1))}.";
 
             await ReplyAsync(response + ":", false, builder.Build()).ConfigureAwait(false);
         }
