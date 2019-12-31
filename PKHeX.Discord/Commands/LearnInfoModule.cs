@@ -23,7 +23,7 @@ namespace PKHeX.Discord
         }
 
         [Command("encounter"), Alias("find")]
-        [Summary("Returns a list of encounter locations where a pkm can be found, to learn all of the moves asked. Separate the species and moves with a comma.")]
+        [Summary("Returns a list of encounter locations where a pkm can be found, to learn all of the moves asked.")]
         public async Task EncounterAsync([Remainder][Summary("Separate the species and moves with a comma.")]string speciesAndMoves)
         {
             var args = speciesAndMoves.Split(", ");
@@ -95,7 +95,7 @@ namespace PKHeX.Discord
 
             var response = $"Here's where you can find {species}";
             if (args.Length > 1)
-                response += $" with {string.Join(", ", args.Skip(1))}.";
+                response += $" with {string.Join(", ", args.Skip(1))}";
 
             await ReplyAsync(response + ":", false, builder.Build()).ConfigureAwait(false);
         }

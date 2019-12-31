@@ -46,7 +46,7 @@ namespace PKHeX.Discord
         public static string GetFormattedShowdownText(PKM pkm)
         {
             var showdown = ShowdownSet.GetShowdownText(pkm);
-            return "```\n" + showdown + "\n```";
+            return Format.Code(showdown);
         }
     }
 }

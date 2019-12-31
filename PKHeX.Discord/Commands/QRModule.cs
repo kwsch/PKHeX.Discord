@@ -26,7 +26,7 @@ namespace PKHeX.Discord
 
             var pkm = download.Data;
             var finalQR = Sprites.GetFullQR(pkm);
-            var msg = $"Here's the QR for `{download.SanitizedFileName}`!";
+            var msg = $"Here's the QR for {download.SanitizedFileName}!";
             await Context.Channel.SendImageAsync(finalQR, msg).ConfigureAwait(false);
         }
     }

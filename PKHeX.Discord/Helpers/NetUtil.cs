@@ -16,7 +16,7 @@ namespace PKHeX.Discord
 
         public static async Task<Download<PKM>> DownloadPKMAsync(IAttachment att)
         {
-            var result = new Download<PKM> { SanitizedFileName = $"`{att.Filename.Replace("`", "\\`")}`" };
+            var result = new Download<PKM> { SanitizedFileName = Format.Sanitize(att.Filename) };
             if (!PKX.IsPKM(att.Size))
             {
                 result.ErrorMessage = $"{result.SanitizedFileName}: Invalid size.";
