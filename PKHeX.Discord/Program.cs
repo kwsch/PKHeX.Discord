@@ -152,6 +152,7 @@ namespace PKHeX.Discord
 
                 // Execute the command. (result does not indicate a return value, 
                 // rather an object stating if the command executed successfully).
+                await Log(new LogMessage(LogSeverity.Info, "Command", $"Executing command from {msg.Author.Username}. Content: {msg}")).ConfigureAwait(false);
                 var result = await _commands.ExecuteAsync(context, pos, _services).ConfigureAwait(false);
 
                 // Uncomment the following lines if you want the bot
