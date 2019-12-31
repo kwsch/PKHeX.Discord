@@ -1,5 +1,7 @@
-﻿using System.Linq;
+﻿using System.Collections.Generic;
+using System.Linq;
 using System.Threading.Tasks;
+
 using Discord;
 using Discord.Commands;
 
@@ -49,7 +51,7 @@ namespace PKHeX.Discord
 
         [Command("help")]
         [Summary("Lists information about a specific command.")]
-        public async Task HelpAsync(string command)
+        public async Task HelpAsync([Summary("The command you want help for")] string command)
         {
             var result = _service.Search(Context, command);
 
@@ -72,13 +74,32 @@ namespace PKHeX.Discord
                 builder.AddField(x =>
                 {
                     x.Name = string.Join(", ", cmd.Aliases);
-                    x.Value = $"Parameters: {(cmd.Parameters.Count == 0 ? "None" : string.Join(", ", cmd.Parameters.Select(p => p.Name)))}\n" +
-                              $"Summary: {cmd.Summary}";
+                    x.Value = GetCommandSummary(cmd);
                     x.IsInline = false;
                 });
             }
 
             await ReplyAsync("Help has arrived!", false, builder.Build()).ConfigureAwait(false);
+        }
+
+        private static string GetCommandSummary(CommandInfo cmd)
+        {
+            return $"Summary: {cmd.Summary}\nParameters: {GetParameterSummary(cmd.Parameters)}";
+        }
+
+        private static string GetParameterSummary(IReadOnlyList<ParameterInfo> p)
+        {
+            if (p.Count == 0)
+                return "None";
+            return $"{p.Count}\n- " + string.Join("\n- ", p.Select(GetParameterSummary));
+        }
+
+        private static string GetParameterSummary(ParameterInfo z)
+        {
+            var result = z.Name;
+            if (!string.IsNullOrWhiteSpace(z.Summary))
+                result += $" ({z.Summary})";
+            return result;
         }
     }
 }

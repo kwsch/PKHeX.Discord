@@ -10,8 +10,8 @@ namespace PKHeX.Discord
     public class LearnInfoModule : ModuleBase<SocketCommandContext>
     {
         [Command("learn"), Alias("canlearn")]
-        [Summary("Checks if the pkm can learn all of the moves asked. Separate the species and moves with a comma.")]
-        public async Task LearnAsync([Remainder]string speciesAndMoves)
+        [Summary("Checks if the pkm can learn all of the moves asked.")]
+        public async Task LearnAsync([Remainder][Summary("Separate the species and moves with a comma.")] string speciesAndMoves)
         {
             var args = speciesAndMoves.Split(", ");
             var species = args[0];
@@ -24,7 +24,7 @@ namespace PKHeX.Discord
 
         [Command("encounter"), Alias("find")]
         [Summary("Returns a list of encounter locations where a pkm can be found, to learn all of the moves asked. Separate the species and moves with a comma.")]
-        public async Task EncounterAsync([Remainder]string speciesAndMoves)
+        public async Task EncounterAsync([Remainder][Summary("Separate the species and moves with a comma.")]string speciesAndMoves)
         {
             var args = speciesAndMoves.Split(", ");
             var species = args[0];
