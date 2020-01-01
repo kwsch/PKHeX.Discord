@@ -1,4 +1,5 @@
-﻿using System.Linq;
+﻿using System;
+using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using Discord;
@@ -9,11 +10,13 @@ namespace PKHeX.Discord
 {
     public class LearnInfoModule : ModuleBase<SocketCommandContext>
     {
+        private static readonly string[] Splitters = {", ", ","};
+
         [Command("learn"), Alias("canlearn")]
         [Summary("Checks if the pkm can learn all of the moves asked.")]
         public async Task LearnAsync([Remainder][Summary("Separate the species and moves with a comma.")] string speciesAndMoves)
         {
-            var args = speciesAndMoves.Split(", ");
+            var args = speciesAndMoves.Split(Splitters, StringSplitOptions.RemoveEmptyEntries);
             var species = args[0];
             var summary = EncounterLearn.CanLearn(species, args.Skip(1));
             var msg = summary
@@ -26,7 +29,7 @@ namespace PKHeX.Discord
         [Summary("Returns a list of encounter locations where a pkm can be found, to learn all of the moves asked.")]
         public async Task EncounterAsync([Remainder][Summary("Separate the species and moves with a comma.")]string speciesAndMoves)
         {
-            var args = speciesAndMoves.Split(", ");
+            var args = speciesAndMoves.Split(Splitters, StringSplitOptions.RemoveEmptyEntries);
             var species = args[0];
             var builder = new EmbedBuilder
             {
