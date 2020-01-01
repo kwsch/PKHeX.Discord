@@ -31,6 +31,7 @@ namespace PKHeX.Discord
                 $"- Runtime: {RuntimeInformation.FrameworkDescription} {RuntimeInformation.ProcessArchitecture} " +
                 $"({RuntimeInformation.OSDescription} {RuntimeInformation.OSArchitecture})\n" +
                 $"- Uptime: {GetUptime()}\n" +
+                $"- Invite URL: {Format.EscapeUrl($"https://discordapp.com/oauth2/authorize?client_id={app.Id}&permissions=0&scope=bot")}\n" +
                 "\n" +
                 $"{Format.Bold("Stats")}\n" +
                 $"- Heap Size: {GetHeapSize()}MiB\n" +
