@@ -33,6 +33,32 @@ namespace PKHeX.Discord
                 await Legalize(att).ConfigureAwait(false);
         }
 
+        [Command("convert"), Alias("showdown")]
+        [Summary("Tries to convert the Showdown Set to pkm data.")]
+        public async Task ConvertShowdown([Remainder][Summary("Showdown Set")]string content)
+        {
+            content = ReusableActions.StripCodeBlock(content);
+            var set = new ShowdownSet(content);
+            if (set.Species <= 0)
+            {
+                await ReplyAsync("Oops! I wasn't able to interpret your message! If you intended to convert something, please double check what you're pasting!").ConfigureAwait(false);
+                return;
+            }
+
+            var sav = TrainerSettings.GetSavedTrainerData(set.Format);
+            var legal = sav.GetLegalFromSet(set, out var result);
+            if (new LegalityAnalysis(legal).Valid)
+            {
+                var msg = $"Here's your ({result}) legalized PKM for {GameInfo.Strings.Species[set.Species]}!\n{ReusableActions.GetFormattedShowdownText(legal)}";
+                await Context.Channel.SendPKMAsync(legal, msg).ConfigureAwait(false);
+            }
+            else // Invalid
+            {
+                var msg = $"Oops! I wasn't able to create something from that. Here's my best attempt for that {GameInfo.Strings.Species[set.Species]}!\n{ReusableActions.GetFormattedShowdownText(legal)}";
+                await Context.Channel.SendPKMAsync(legal, msg).ConfigureAwait(false);
+            }
+        }
+
         private async Task Legalize(IAttachment att)
         {
             var download = await NetUtil.DownloadPKMAsync(att).ConfigureAwait(false);
