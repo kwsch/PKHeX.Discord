@@ -22,23 +22,30 @@ namespace PKHeX.Discord
         {
             var app = await Context.Client.GetApplicationInfoAsync().ConfigureAwait(false);
 
-            await ReplyAsync($"{detail}\n" +
-                "\n" +
-                $"{Format.Bold("Info")}\n" +
-                $"- Source Code: {Format.EscapeUrl(repo)}\n" +
-                $"- Author: {app.Owner} ({app.Owner.Id})\n" +
-                $"- Library: Discord.Net ({DiscordConfig.Version})\n" +
-                $"- Runtime: {RuntimeInformation.FrameworkDescription} {RuntimeInformation.ProcessArchitecture} " +
-                $"({RuntimeInformation.OSDescription} {RuntimeInformation.OSArchitecture})\n" +
-                $"- Uptime: {GetUptime()}\n" +
-                $"- Invite URL: {Format.EscapeUrl($"https://discordapp.com/oauth2/authorize?client_id={app.Id}&permissions=0&scope=bot")}\n" +
-                "\n" +
-                $"{Format.Bold("Stats")}\n" +
-                $"- Heap Size: {GetHeapSize()}MiB\n" +
-                $"- Guilds: {Context.Client.Guilds.Count}\n" +
-                $"- Channels: {Context.Client.Guilds.Sum(g => g.Channels.Count)}\n" +
-                $"- Users: {Context.Client.Guilds.Sum(g => g.Users.Count)}\n"
-                ).ConfigureAwait(false);
+            var builder = new EmbedBuilder
+            {
+                Color = new Color(114, 137, 218),
+                Description = detail,
+            };
+
+            var invite = $"https://discordapp.com/oauth2/authorize?client_id={app.Id}&permissions=0&scope=bot";
+            builder.AddField("Info",
+                $"- [Source Code]({repo}) | [Invite URL]({invite})\n" +
+                $"- {Format.Bold("Author")}: {app.Owner} ({app.Owner.Id})\n" +
+                $"- {Format.Bold("Library")}: Discord.Net ({DiscordConfig.Version})\n" +
+                $"- {Format.Bold("Uptime")}: {GetUptime()}\n" +
+                $"- {Format.Bold("Runtime")}: {RuntimeInformation.FrameworkDescription} {RuntimeInformation.ProcessArchitecture} " +
+                $"({RuntimeInformation.OSDescription} {RuntimeInformation.OSArchitecture})\n"
+                );
+
+            builder.AddField("Stats",
+                $"- {Format.Bold("Heap Size")}: {GetHeapSize()}MiB\n" +
+                $"- {Format.Bold("Guilds")}: {Context.Client.Guilds.Count}\n" +
+                $"- {Format.Bold("Channels")}: {Context.Client.Guilds.Sum(g => g.Channels.Count)}\n" +
+                $"- {Format.Bold("Users")}: {Context.Client.Guilds.Sum(g => g.Users.Count)}\n"
+                );
+
+            await ReplyAsync("Here's a bit about me!", embed:builder.Build()).ConfigureAwait(false);
         }
 
         private static string GetUptime() => (DateTime.Now - Process.GetCurrentProcess().StartTime).ToString(@"dd\.hh\:mm\:ss");
