@@ -19,6 +19,16 @@ namespace PKHeX.Discord
                 RibbonStrings.ResetDictionary(GameInfo.Strings.ribbons);
             });
 
+            // Seed the Trainer Database with enough fake save files so that we return a generation sensitive format when needed.
+            for (int i = 1; i < PKX.Generation; i++)
+            {
+                const string OT = "PKHeX-D";
+                var blankSAV = SaveUtil.GetBlankSAV(i, OT);
+                TrainerSettings.Register(blankSAV);
+            }
+
+            // Legalizer.AllowBruteForce = false;
+
             // Update Legality Analysis strings
             LegalityAnalysis.MoveStrings = GameInfo.Strings.movelist;
             LegalityAnalysis.SpeciesStrings = GameInfo.Strings.specieslist;
@@ -35,28 +45,40 @@ namespace PKHeX.Discord
 
         [Command("convert"), Alias("showdown")]
         [Summary("Tries to convert the Showdown Set to pkm data.")]
+        [Priority(1)]
+        public async Task ConvertShowdown([Summary("Generation/Format")]int gen, [Remainder][Summary("Showdown Set")]string content)
+        {
+            content = ReusableActions.StripCodeBlock(content);
+            var set = new ShowdownSet(content);
+            var sav = TrainerSettings.GetSavedTrainerData(gen);
+            await GenerateFromSet(sav, set).ConfigureAwait(false);
+        }
+
+        [Command("convert"), Alias("showdown")]
+        [Summary("Tries to convert the Showdown Set to pkm data.")]
+        [Priority(0)]
         public async Task ConvertShowdown([Remainder][Summary("Showdown Set")]string content)
         {
             content = ReusableActions.StripCodeBlock(content);
             var set = new ShowdownSet(content);
+            var sav = TrainerSettings.GetSavedTrainerData(set.Format);
+            await GenerateFromSet(sav, set).ConfigureAwait(false);
+        }
+
+        private async Task GenerateFromSet(ITrainerInfo sav, ShowdownSet set)
+        {
             if (set.Species <= 0)
             {
                 await ReplyAsync("Oops! I wasn't able to interpret your message! If you intended to convert something, please double check what you're pasting!").ConfigureAwait(false);
                 return;
             }
-
-            var sav = TrainerSettings.GetSavedTrainerData(set.Format);
-            var legal = sav.GetLegalFromSet(set, out var result);
-            if (new LegalityAnalysis(legal).Valid)
-            {
-                var msg = $"Here's your ({result}) legalized PKM for {GameInfo.Strings.Species[set.Species]}!\n{ReusableActions.GetFormattedShowdownText(legal)}";
-                await Context.Channel.SendPKMAsync(legal, msg).ConfigureAwait(false);
-            }
-            else // Invalid
-            {
-                var msg = $"Oops! I wasn't able to create something from that. Here's my best attempt for that {GameInfo.Strings.Species[set.Species]}!\n{ReusableActions.GetFormattedShowdownText(legal)}";
-                await Context.Channel.SendPKMAsync(legal, msg).ConfigureAwait(false);
-            }
+            var pkm = sav.GetLegalFromSet(set, out var result);
+            var la = new LegalityAnalysis(pkm);
+            var spec = GameInfo.Strings.Species[set.Species];
+            var msg = la.Valid
+                ? $"Here's your ({result}) legalized PKM for {spec}!"
+                : $"Oops! I wasn't able to create something from that. Here's my best attempt for that {spec}!";
+            await Context.Channel.SendPKMAsync(pkm, msg + $"\n{ReusableActions.GetFormattedShowdownText(pkm)}").ConfigureAwait(false);
         }
 
         private async Task Legalize(IAttachment att)
