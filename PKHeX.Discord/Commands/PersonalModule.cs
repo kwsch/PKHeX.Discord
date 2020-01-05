@@ -19,7 +19,7 @@ namespace PKHeX.Discord
 
         [Command("personal"), Alias("pi")]
         [Summary("Prints Personal data for the species.")]
-        public async Task PrintDataAsync([Summary("species-form")]string species)
+        public async Task PrintDataAsync([Summary("species-form")][Remainder]string species)
         {
             var split = species.Split('-');
             if (split.Length == 0)

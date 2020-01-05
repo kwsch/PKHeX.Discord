@@ -52,7 +52,7 @@ namespace PKHeX.Discord
 
         [Command("move")]
         [Summary("Gets the index of the requested move name.")]
-        public async Task GetMoveAsync([Summary("Move Name")]string move)
+        public async Task GetMoveAsync([Summary("Move Name")][Remainder]string move)
         {
             var str = GameInfo.Strings.movelist;
             int index = StringUtil.FindIndexIgnoreCase(str, move);
@@ -61,7 +61,7 @@ namespace PKHeX.Discord
 
         [Command("item")]
         [Summary("Gets the index of the requested item name.")]
-        public async Task GetItemAsync([Summary("Move Name")]string item)
+        public async Task GetItemAsync([Summary("Move Name")][Remainder]string item)
         {
             var str = GameInfo.Strings.movelist;
             int index = StringUtil.FindIndexIgnoreCase(str, item);
@@ -70,7 +70,7 @@ namespace PKHeX.Discord
 
         [Command("species")]
         [Summary("Gets the index of the requested species name.")]
-        public async Task GetSpeciesAsync([Summary("Species Name")]string species)
+        public async Task GetSpeciesAsync([Summary("Species Name")][Remainder]string species)
         {
             var str = GameInfo.Strings.specieslist;
             int index = StringUtil.FindIndexIgnoreCase(str, species);
@@ -79,7 +79,7 @@ namespace PKHeX.Discord
 
         [Command("ability")]
         [Summary("Gets the index of the requested ability name.")]
-        public async Task GetAbilityAsync([Summary("Ability Name")]string ability)
+        public async Task GetAbilityAsync([Summary("Ability Name")][Remainder]string ability)
         {
             var str = GameInfo.Strings.abilitylist;
             int index = StringUtil.FindIndexIgnoreCase(str, ability);
