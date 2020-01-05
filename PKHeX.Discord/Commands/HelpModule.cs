@@ -29,8 +29,13 @@ namespace PKHeX.Discord
             foreach (var module in _service.Modules)
             {
                 string description = null;
+                HashSet<string> mentioned = new HashSet<string>();
                 foreach (var cmd in module.Commands)
                 {
+                    var name = cmd.Name;
+                    if (mentioned.Contains(name))
+                        continue;
+                    mentioned.Add(name);
                     var result = await cmd.CheckPreconditionsAsync(Context).ConfigureAwait(false);
                     if (result.IsSuccess)
                         description += $"{cmd.Aliases[0]}\n";
