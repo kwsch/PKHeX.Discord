@@ -49,5 +49,41 @@ namespace PKHeX.Discord
             else
                 await ReplyAsync(str[ability]).ConfigureAwait(false);
         }
+
+        [Command("move")]
+        [Summary("Gets the index of the requested move name.")]
+        public async Task GetMoveAsync([Summary("Move Name")]string move)
+        {
+            var str = GameInfo.Strings.movelist;
+            int index = StringUtil.FindIndexIgnoreCase(str, move);
+            await ReplyAsync(index.ToString()).ConfigureAwait(false);
+        }
+
+        [Command("item")]
+        [Summary("Gets the index of the requested item name.")]
+        public async Task GetItemAsync([Summary("Move Name")]string item)
+        {
+            var str = GameInfo.Strings.movelist;
+            int index = StringUtil.FindIndexIgnoreCase(str, item);
+            await ReplyAsync(index.ToString()).ConfigureAwait(false);
+        }
+
+        [Command("species")]
+        [Summary("Gets the index of the requested species name.")]
+        public async Task GetSpeciesAsync([Summary("Species Name")]string species)
+        {
+            var str = GameInfo.Strings.specieslist;
+            int index = StringUtil.FindIndexIgnoreCase(str, species);
+            await ReplyAsync(index.ToString()).ConfigureAwait(false);
+        }
+
+        [Command("ability")]
+        [Summary("Gets the index of the requested ability name.")]
+        public async Task GetAbilityAsync([Summary("Ability Name")]string ability)
+        {
+            var str = GameInfo.Strings.abilitylist;
+            int index = StringUtil.FindIndexIgnoreCase(str, ability);
+            await ReplyAsync(index.ToString()).ConfigureAwait(false);
+        }
     }
 }
