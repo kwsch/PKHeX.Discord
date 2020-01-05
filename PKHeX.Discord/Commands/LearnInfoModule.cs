@@ -18,6 +18,22 @@ namespace PKHeX.Discord
         {
             var args = speciesAndMoves.Split(Splitters, StringSplitOptions.RemoveEmptyEntries);
             var species = args[0];
+
+            // Sanity check
+            var str = GameInfo.Strings;
+            if (StringUtil.FindIndexIgnoreCase(str.specieslist, species) < 0)
+            {
+                await ReplyAsync($"Bad species argument ({species})!").ConfigureAwait(false);
+                return;
+            }
+            foreach (var move in args.Skip(1))
+            {
+                if (StringUtil.FindIndexIgnoreCase(str.movelist, move) >= 0)
+                    continue;
+                await ReplyAsync($"Bad move argument ({move})!").ConfigureAwait(false);
+                return;
+            }
+
             var summary = EncounterLearn.CanLearn(species, args.Skip(1));
             var msg = summary
                 ? $"Yep! {species} can learn {string.Join(", ", args.Skip(1))}."
@@ -31,13 +47,29 @@ namespace PKHeX.Discord
         {
             var args = speciesAndMoves.Split(Splitters, StringSplitOptions.RemoveEmptyEntries);
             var species = args[0];
+
+            // Sanity check
+            var str = GameInfo.Strings;
+            if (StringUtil.FindIndexIgnoreCase(str.specieslist, species) < 0)
+            {
+                await ReplyAsync($"Bad species argument ({species})!").ConfigureAwait(false);
+                return;
+            }
+            foreach (var move in args.Skip(1))
+            {
+                if (StringUtil.FindIndexIgnoreCase(str.movelist, move) >= 0)
+                    continue;
+                await ReplyAsync($"Bad move argument ({move})!").ConfigureAwait(false);
+                return;
+            }
+
+            var summary = EncounterLearn.GetLearnSummary(species, args.Skip(1));
             var builder = new EmbedBuilder
             {
                 Color = new Color(114, 137, 218),
                 Description = "Encounters:"
             };
 
-            var summary = EncounterLearn.GetLearnSummary(species, args.Skip(1));
             var sb = new StringBuilder();
             var key = string.Empty;
             bool any = false;
