@@ -126,7 +126,7 @@ namespace PKHeX.Discord
                 : "Egg Group: {0}", EggGroups[pi.EggGroup1], EggGroups[pi.EggGroup2]));
             lines.Add($"Hatch Cycles: {pi.HatchCycles}");
             lines.Add($"Height: {(decimal) pi.Height / 100:00.00} m");
-            lines.Add($" Weight: {(decimal) pi.Weight / 10:000.0} kg");
+            lines.Add($"Weight: {(decimal) pi.Weight / 10:000.0} kg");
             lines.Add($"Color: {Colors[pi.Color]}");
             return lines;
         }
