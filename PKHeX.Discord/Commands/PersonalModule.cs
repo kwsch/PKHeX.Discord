@@ -101,7 +101,8 @@ namespace PKHeX.Discord
                 $"Base Stats: {pi.HP}.{pi.ATK}.{pi.DEF}.{pi.SPA}.{pi.SPD}.{pi.SPE} (BST={pi.BST})",
                 $"EV Yield: {pi.EV_HP}.{pi.EV_ATK}.{pi.EV_DEF}.{pi.EV_SPA}.{pi.EV_SPD}.{pi.EV_SPE}",
                 $"Gender Ratio: {pi.Gender}",
-                $"Catch Rate: {pi.CatchRate}"
+                $"Catch Rate: {pi.CatchRate}",
+                $"Form Count: {pi.FormeCount}",
             };
 
             var abils = pi.Abilities;
