@@ -74,20 +74,21 @@ namespace PKHeX.Discord
             var builder = new EmbedBuilder
             {
                 Color = Color.Gold,
-                Description = $"Personal Info for {specName}-{formName}:"
             };
-            foreach (var line in lines)
+            builder.AddField(x =>
             {
-                var split = line.Split(":");
-                builder.AddField(x =>
-                {
-                    x.Name = split[0];
-                    x.Value = split[1].Trim();
-                    x.IsInline = false;
-                });
-            }
+                x.Name = $"Personal Info for {specName}-{formName}:";
+                x.Value = string.Join('\n', lines.Select(GetPrettyLine));
+                x.IsInline = false;
+            });
 
             await ReplyAsync("Personal Info!", embed: builder.Build()).ConfigureAwait(false);
+        }
+
+        private static string GetPrettyLine(string arg)
+        {
+            var split = arg.Split(':');
+            return $"{Format.Bold(split[0])}:{split[1]}";
         }
 
         private static IEnumerable<string> GetPersonalInfoSummary(PersonalInfo pi, GameStrings strings)
