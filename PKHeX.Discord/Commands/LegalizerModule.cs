@@ -27,6 +27,8 @@ namespace PKHeX.Discord
                 TrainerSettings.Register(blankSAV);
             }
 
+            PKMConverter.Trainer = TrainerSettings.GetSavedTrainerData(7);
+
             // Legalizer.AllowBruteForce = false;
 
             // Update Legality Analysis strings
