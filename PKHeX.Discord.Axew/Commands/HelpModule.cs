@@ -5,7 +5,7 @@ using System.Threading.Tasks;
 using Discord;
 using Discord.Commands;
 
-namespace PKHeX.Discord
+namespace PKHeX.Discord.Axew
 {
     public class HelpModule : ModuleBase<SocketCommandContext>
     {

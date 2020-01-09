@@ -6,7 +6,7 @@ using PKHeX.Core;
 using Image = System.Drawing.Image;
 using ImageFormat = System.Drawing.Imaging.ImageFormat;
 
-namespace PKHeX.Discord
+namespace PKHeX.Discord.Axew
 {
     public static class ReusableActions
     {

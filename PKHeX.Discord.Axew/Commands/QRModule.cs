@@ -2,7 +2,7 @@
 using Discord;
 using Discord.Commands;
 
-namespace PKHeX.Discord
+namespace PKHeX.Discord.Axew
 {
     public class QRModule : ModuleBase<SocketCommandContext>
     {

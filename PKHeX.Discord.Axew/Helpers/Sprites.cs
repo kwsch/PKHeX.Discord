@@ -3,7 +3,7 @@ using System.Drawing;
 using PKHeX.Core;
 using PKHeX.Drawing;
 
-namespace PKHeX.Discord
+namespace PKHeX.Discord.Axew
 {
     public static class Sprites
     {

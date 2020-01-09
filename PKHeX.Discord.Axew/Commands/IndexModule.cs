@@ -2,7 +2,7 @@
 using Discord.Commands;
 using PKHeX.Core;
 
-namespace PKHeX.Discord
+namespace PKHeX.Discord.Axew
 {
     public class IndexModule : ModuleBase<SocketCommandContext>
     {

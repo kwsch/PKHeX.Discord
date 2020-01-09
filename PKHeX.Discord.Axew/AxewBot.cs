@@ -1,5 +1,4 @@
 ﻿using System;
-using System.IO;
 using System.Reflection;
 using System.Threading;
 using System.Threading.Tasks;
@@ -9,9 +8,9 @@ using Discord.Commands;
 using Discord.WebSocket;
 using Microsoft.Extensions.DependencyInjection;
 
-namespace PKHeX.Discord
+namespace PKHeX.Discord.Axew
 {
-    internal sealed class Program
+    public sealed class AxewBot
     {
         private readonly DiscordSocketClient _client;
 
@@ -21,16 +20,7 @@ namespace PKHeX.Discord
         private readonly CommandService _commands;
         private readonly IServiceProvider _services;
 
-        public static void Main(string[] args)
-        {
-            foreach (var line in args)
-                Console.WriteLine(line);
-            // Call the Program constructor, followed by the 
-            // MainAsync method and wait until it finishes (which should be never).
-            new Program().MainAsync().GetAwaiter().GetResult();
-        }
-
-        private Program()
+        public AxewBot()
         {
             _client = new DiscordSocketClient(new DiscordSocketConfig
             {
@@ -97,22 +87,17 @@ namespace PKHeX.Discord
             return Task.CompletedTask;
         }
 
-        private async Task MainAsync()
+        public async Task MainAsync(string token)
         {
             // Centralize the logic for commands into a separate method.
             await InitCommands().ConfigureAwait(false);
 
             // Login and connect.
-            await _client.LoginAsync(TokenType.Bot, GetToken()).ConfigureAwait(false);
+            await _client.LoginAsync(TokenType.Bot, token).ConfigureAwait(false);
             await _client.StartAsync().ConfigureAwait(false);
 
             // Wait infinitely so your bot actually stays connected.
             await Task.Delay(Timeout.Infinite).ConfigureAwait(false);
-        }
-
-        private static string GetToken()
-        {
-            return File.ReadAllText("token.txt");
         }
 
         private async Task InitCommands()
@@ -121,7 +106,7 @@ namespace PKHeX.Discord
             // Module classes MUST be marked 'public' or they will be ignored.
             // You also need to pass your 'IServiceProvider' instance now,
             // so make sure that's done before you get here.
-            await _commands.AddModulesAsync(Assembly.GetEntryAssembly(), _services).ConfigureAwait(false);
+            await _commands.AddModulesAsync(Assembly.GetExecutingAssembly(), _services).ConfigureAwait(false);
             // Or add Modules manually if you prefer to be a little more explicit:
             //await _commands.AddModuleAsync<SomeModule>(_services);
             // Note that the first one is 'Modules' (plural) and the second is 'Module' (singular).

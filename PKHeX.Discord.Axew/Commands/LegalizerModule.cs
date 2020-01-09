@@ -6,7 +6,7 @@ using Discord.Commands;
 using PKHeX.Core;
 using PKHeX.Core.AutoMod;
 
-namespace PKHeX.Discord
+namespace PKHeX.Discord.Axew
 {
     public class LegalizerModule : ModuleBase<SocketCommandContext>
     {

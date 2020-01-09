@@ -3,7 +3,7 @@ using System.Threading.Tasks;
 using Discord;
 using PKHeX.Core;
 
-namespace PKHeX.Discord
+namespace PKHeX.Discord.Axew
 {
     public static class NetUtil
     {
