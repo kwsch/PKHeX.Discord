@@ -20,6 +20,9 @@ namespace PKHeX.Discord.Axew
         private readonly CommandService _commands;
         private readonly IServiceProvider _services;
 
+        // Bot listens to channel messages to reply with a ShowdownSet whenever a PKM file is attached (not with a command).
+        private bool ConvertPKMToShowdownSet { get; } = true;
+
         public AxewBot()
         {
             _client = new DiscordSocketClient(new DiscordSocketConfig
@@ -136,8 +139,6 @@ namespace PKHeX.Discord.Axew
 
             await TryHandleMessageAsync(msg).ConfigureAwait(false);
         }
-
-        private bool ConvertPKMToShowdownSet { get; } = true;
 
         private async Task TryHandleMessageAsync(SocketMessage msg)
         {

@@ -26,7 +26,8 @@ namespace PKHeX.Discord.Axew
                 TrainerSettings.Register(blankSAV);
             }
 
-            PKMConverter.Trainer = TrainerSettings.GetSavedTrainerData(7);
+            var trainer = TrainerSettings.GetSavedTrainerData(7);
+            PKMConverter.SetPrimaryTrainer(trainer);
 
             // Legalizer.AllowBruteForce = false;
 
