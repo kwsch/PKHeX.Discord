@@ -77,7 +77,7 @@ namespace PKHeX.Discord.Axew
             };
             builder.AddField(x =>
             {
-                x.Name = $"Personal Info for {specName}-{formName}:";
+                x.Name = $"Personal Info for {specName}{(string.IsNullOrEmpty(formName) ? "" : $"-{formName}")}:";
                 x.Value = string.Join('\n', lines.Select(GetPrettyLine));
                 x.IsInline = false;
             });
@@ -103,6 +103,7 @@ namespace PKHeX.Discord.Axew
                 $"Gender Ratio: {pi.Gender}",
                 $"Catch Rate: {pi.CatchRate}",
                 $"Form Count: {pi.FormeCount}",
+                $"Evolution Stage: {pi.EvoStage}",
             };
 
             var abils = pi.Abilities;
