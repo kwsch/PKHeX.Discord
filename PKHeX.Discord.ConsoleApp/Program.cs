@@ -13,7 +13,7 @@ namespace PKHeX.Discord.ConsoleApp
                 Console.WriteLine(line);
             // Call the Program constructor, followed by the 
             // MainAsync method and wait until it finishes (which should be never).
-            var token = File.ReadAllText("token.txt");
+            var token = File.ReadAllText("token.txt").Trim();
             await new AxewBot().MainAsync(token).ConfigureAwait(false);
         }
     }
