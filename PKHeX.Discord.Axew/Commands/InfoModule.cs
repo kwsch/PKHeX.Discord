@@ -1,6 +1,8 @@
 ﻿using System;
 using System.Diagnostics;
+using System.IO;
 using System.Linq;
+using System.Reflection;
 using System.Runtime.InteropServices;
 using System.Threading.Tasks;
 using Discord;
@@ -35,7 +37,10 @@ namespace PKHeX.Discord.Axew
                 $"- {Format.Bold("Library")}: Discord.Net ({DiscordConfig.Version})\n" +
                 $"- {Format.Bold("Uptime")}: {GetUptime()}\n" +
                 $"- {Format.Bold("Runtime")}: {RuntimeInformation.FrameworkDescription} {RuntimeInformation.ProcessArchitecture} " +
-                $"({RuntimeInformation.OSDescription} {RuntimeInformation.OSArchitecture})\n"
+                $"({RuntimeInformation.OSDescription} {RuntimeInformation.OSArchitecture})\n" +
+                $"- {Format.Bold("Buildtime")}: {GetBuildTime()}\n" +
+                $"- {Format.Bold("Core")}: {GetCoreDate()}\n" +
+                $"- {Format.Bold("AutoLegality")}: {GetALMDate()}\n"
                 );
 
             builder.AddField("Stats",
@@ -50,5 +55,22 @@ namespace PKHeX.Discord.Axew
 
         private static string GetUptime() => (DateTime.Now - Process.GetCurrentProcess().StartTime).ToString(@"dd\.hh\:mm\:ss");
         private static string GetHeapSize() => Math.Round(GC.GetTotalMemory(true) / (1024.0 * 1024.0), 2).ToString();
+
+        private static string GetBuildTime()
+        {
+            var assembly = Assembly.GetExecutingAssembly();
+            return File.GetLastWriteTime(assembly.Location).ToString(@"yy-MM-dd\.hh\:mm");
+        }
+
+        public static string GetCoreDate() => GetDateOfDll("PKHeX.Core.dll");
+        public static string GetALMDate() => GetDateOfDll("PKHeX.Core.AutoMod.dll");
+
+        private static string GetDateOfDll(string dll)
+        {
+            var folder = Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location);
+            var path = Path.Combine(folder, dll);
+            var date = File.GetLastWriteTime(path);
+            return date.ToString(@"yy-MM-dd\.hh\:mm");
+        }
     }
 }
