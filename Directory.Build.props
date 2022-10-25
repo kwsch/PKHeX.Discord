@@ -1,0 +1,12 @@
+<Project>
+  <PropertyGroup>
+    <TargetFramework>net6.0-windows</TargetFramework>
+    <LangVersion>10</LangVersion>
+    <Nullable>enable</Nullable>
+    <NeutralLanguage>en</NeutralLanguage>
+    <Product>PKHeX.Discord</Product>
+    <Company>Project Pokémon</Company>
+    <Authors>Kaphotics</Authors>
+    <Copyright>Kaphotics</Copyright>
+  </PropertyGroup>
+</Project>

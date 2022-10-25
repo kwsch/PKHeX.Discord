@@ -12,7 +12,7 @@ namespace PKHeX.Discord.Axew
     {
         [Command("personal"), Alias("pi")]
         [Summary("Prints Personal data for the species.")]
-        public async Task PrintDataAsync([Summary("Species Index")]int species, [Summary("Form Index")]int form)
+        public async Task PrintDataAsync([Summary("Species Index")]ushort species, [Summary("Form Index")]byte form)
         {
             await PrintPersonalInfoAsync(species, form).ConfigureAwait(false);
         }
@@ -31,25 +31,24 @@ namespace PKHeX.Discord.Axew
             await PrintDataAsync(spec, form).ConfigureAwait(false);
         }
 
-        private static void GetSpeciesForm(IReadOnlyList<string> split, out int spec, out int form)
+        private static void GetSpeciesForm(IReadOnlyList<string> split, out ushort spec, out byte form)
         {
             var strings = GameInfo.Strings;
-            spec = StringUtil.FindIndexIgnoreCase(strings.specieslist, split[0]);
+            spec = (ushort)StringUtil.FindIndexIgnoreCase(strings.specieslist, split[0]);
 
             form = 0;
             if (split.Count <= 1)
                 return;
             var formstr = split[1];
-            if (int.TryParse(formstr, out form))
+            if (byte.TryParse(formstr, out form))
                 return;
-            var forms = FormConverter.GetFormList(spec, strings.Types, strings.forms, GameInfo.GenderSymbolASCII, 8);
-            form = StringUtil.FindIndexIgnoreCase(forms, formstr);
+            var forms = FormConverter.GetFormList(spec, strings.Types, strings.forms, GameInfo.GenderSymbolASCII, PKX.Context);
+            form = (byte)StringUtil.FindIndexIgnoreCase(forms, formstr);
         }
 
         private static readonly string[] AbilitySuffix = { " (1)", " (2)", " (H)" };
-        private static readonly string[] ItemPrefix = { "Item 1 (50%)", "Item 2 (5%)", "Item 3 (1%)" };
 
-        private async Task PrintPersonalInfoAsync(int spec, int form)
+        private async Task PrintPersonalInfoAsync(ushort spec, byte form)
         {
             var strings = GameInfo.Strings;
             if (spec <= 0 || spec >= strings.specieslist.Length)
@@ -57,15 +56,15 @@ namespace PKHeX.Discord.Axew
                 await ReplyAsync("Bad species argument!").ConfigureAwait(false);
                 return;
             }
-            var forms = FormConverter.GetFormList(spec, strings.Types, strings.forms, GameInfo.GenderSymbolASCII, 8);
-            if (form < 0 || form >= forms.Length)
+            var forms = FormConverter.GetFormList(spec, strings.Types, strings.forms, GameInfo.GenderSymbolASCII, PKX.Context);
+            if (form >= forms.Length)
             {
                 await ReplyAsync("Bad form argument!").ConfigureAwait(false);
                 return;
             }
-            var pi = PersonalTable.SWSH.GetFormeEntry(spec, form);
+            IPersonalInfo pi = PersonalTable.SWSH.GetFormEntry(spec, form);
             if (pi.HP == 0)
-                pi = PersonalTable.USUM.GetFormeEntry(spec, form);
+                pi = PersonalTable.USUM.GetFormEntry(spec, form);
 
             var specName = strings.specieslist[spec];
             var formName = forms[form];
@@ -91,32 +90,29 @@ namespace PKHeX.Discord.Axew
             return $"{Format.Bold(split[0])}:{split[1]}";
         }
 
-        private static IEnumerable<string> GetPersonalInfoSummary(PersonalInfo pi, GameStrings strings)
+        private static IEnumerable<string> GetPersonalInfoSummary(IPersonalInfo pi, GameStrings strings)
         {
             var types = strings.types;
             var abilities = strings.abilitylist;
-            var itemNames = strings.itemlist;
             var lines = new List<string>
             {
-                $"Base Stats: {pi.HP}.{pi.ATK}.{pi.DEF}.{pi.SPA}.{pi.SPD}.{pi.SPE} (BST={pi.BST})",
+                $"Base Stats: {pi.HP}.{pi.ATK}.{pi.DEF}.{pi.SPA}.{pi.SPD}.{pi.SPE} (BST={pi.GetBaseStatTotal()})",
                 $"EV Yield: {pi.EV_HP}.{pi.EV_ATK}.{pi.EV_DEF}.{pi.EV_SPA}.{pi.EV_SPD}.{pi.EV_SPE}",
                 $"Gender Ratio: {pi.Gender}",
                 $"Catch Rate: {pi.CatchRate}",
-                $"Form Count: {pi.FormeCount}",
+                $"Form Count: {pi.FormCount}",
                 $"Evolution Stage: {pi.EvoStage}",
             };
 
-            var abils = pi.Abilities;
-            var msg = string.Join(" | ", abils.Select((z, j) => abilities[z] + AbilitySuffix[j]));
-            lines.Add($"Abilities: {msg}");
+            if (pi is IPersonalAbility p)
+            {
+                var count = p.AbilityCount;
+                var msg = string.Join(" | ", Enumerable.Range(0, count).Select(z => abilities[p.GetAbilityAtIndex(z)] + AbilitySuffix[z]));
+                lines.Add($"Abilities: {msg}");
+            }
             lines.Add(string.Format(pi.Type1 != pi.Type2
                 ? "Type: {0} / {1}"
                 : "Type: {0}", types[pi.Type1], types[pi.Type2]));
-            var items = pi.Items;
-            if (items.Distinct().Count() == 1)
-                lines.Add($"Items: {itemNames[pi.Items[0]]}");
-            else
-                lines.AddRange(items.Select((z, j) => $"{ItemPrefix[j]}: {itemNames[z]}"));
 
             var ExpGroups = Enum.GetNames(typeof(EXPGroup));
             var Colors = Enum.GetNames(typeof(PokeColor));

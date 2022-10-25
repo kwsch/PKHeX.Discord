@@ -1,13 +1,14 @@
 ﻿using System;
 using System.Drawing;
 using PKHeX.Core;
-using PKHeX.Drawing;
+using PKHeX.Drawing.Misc;
+using PKHeX.Drawing.PokeSprite;
 
 namespace PKHeX.Discord.Axew
 {
     public static class Sprites
     {
-        private static readonly Font font = new Font("Microsoft Sans Serif", 8.25f);
+        private static readonly Font font = new("Microsoft Sans Serif", 8.25f);
 
         public static Bitmap GetFullQR(PKM pkm)
         {
@@ -20,7 +21,6 @@ namespace PKHeX.Discord.Axew
 
         public static Image GetSprite(PKM pkm)
         {
-            SpriteUtil.Initialize(pkm.Format >= 8 || pkm is PB7);
             return pkm.Sprite();
         }
     }

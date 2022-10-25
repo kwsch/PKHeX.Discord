@@ -28,8 +28,8 @@ namespace PKHeX.Discord.Axew
 
             foreach (var module in _service.Modules)
             {
-                string description = null;
-                HashSet<string> mentioned = new HashSet<string>();
+                string description = "";
+                HashSet<string> mentioned = new();
                 foreach (var cmd in module.Commands)
                 {
                     var name = cmd.Name;

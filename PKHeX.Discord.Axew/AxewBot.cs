@@ -121,7 +121,7 @@ namespace PKHeX.Discord.Axew
         private async Task HandleMessageAsync(SocketMessage arg)
         {
             // Bail out if it's a System Message.
-            if (!(arg is SocketUserMessage msg))
+            if (arg is not SocketUserMessage msg)
                 return;
 
             // We don't want the bot to respond to itself or other bots.

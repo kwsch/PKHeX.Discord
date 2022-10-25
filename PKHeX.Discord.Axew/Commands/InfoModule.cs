@@ -68,6 +68,8 @@ namespace PKHeX.Discord.Axew
         private static string GetDateOfDll(string dll)
         {
             var folder = Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location);
+            if (folder == null)
+                return "Unknown";
             var path = Path.Combine(folder, dll);
             var date = File.GetLastWriteTime(path);
             return date.ToString(@"yy-MM-dd\.hh\:mm");

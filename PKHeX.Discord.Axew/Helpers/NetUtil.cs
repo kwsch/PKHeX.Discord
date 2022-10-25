@@ -1,4 +1,4 @@
-﻿using System.Net;
+﻿using System.Net.Http;
 using System.Threading.Tasks;
 using Discord;
 using PKHeX.Core;
@@ -7,17 +7,17 @@ namespace PKHeX.Discord.Axew
 {
     public static class NetUtil
     {
-        private static readonly WebClient webClient = new WebClient();
+        private static readonly HttpClient httpClient = new();
 
         public static async Task<byte[]> DownloadFromUrlAsync(string url)
         {
-            return await webClient.DownloadDataTaskAsync(url).ConfigureAwait(false);
+            return await httpClient.GetByteArrayAsync(url).ConfigureAwait(false);
         }
 
         public static async Task<Download<PKM>> DownloadPKMAsync(IAttachment att)
         {
             var result = new Download<PKM> { SanitizedFileName = Format.Sanitize(att.Filename) };
-            if (!PKX.IsPKM(att.Size))
+            if (!EntityDetection.IsSizePlausible(att.Size))
             {
                 result.ErrorMessage = $"{result.SanitizedFileName}: Invalid size.";
                 return result;
@@ -27,7 +27,8 @@ namespace PKHeX.Discord.Axew
 
             // Download the resource and load the bytes into a buffer.
             var buffer = await DownloadFromUrlAsync(url).ConfigureAwait(false);
-            var pkm = PKMConverter.GetPKMfromBytes(buffer, result.SanitizedFileName.Contains("pk6") ? 6 : 7);
+            var prefer = EntityFileExtension.GetContextFromExtension(result.SanitizedFileName);
+            var pkm = EntityFormat.GetFromBytes(buffer, prefer);
             if (pkm == null)
             {
                 result.ErrorMessage = $"{result.SanitizedFileName}: Invalid pkm attachment.";
@@ -43,8 +44,8 @@ namespace PKHeX.Discord.Axew
     public sealed class Download<T>
     {
         public bool Success;
-        public T Data;
-        public string SanitizedFileName;
-        public string ErrorMessage;
+        public T Data = default!;
+        public string SanitizedFileName = string.Empty;
+        public string ErrorMessage = string.Empty;
     }
 }

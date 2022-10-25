@@ -12,28 +12,27 @@ namespace PKHeX.Discord.Axew
         static AutoLegalityExtensions()
         {
             Task.Run(() => {
-                var lang = Thread.CurrentThread.CurrentCulture.TwoLetterISOLanguageName.Substring(0, 2);
-                Util.SetLocalization(typeof(LegalityCheckStrings), lang);
-                Util.SetLocalization(typeof(MessageStrings), lang);
+                var lang = Thread.CurrentThread.CurrentCulture.TwoLetterISOLanguageName[..2];
+                LocalizationUtil.SetLocalization(typeof(LegalityCheckStrings), lang);
+                LocalizationUtil.SetLocalization(typeof(MessageStrings), lang);
                 RibbonStrings.ResetDictionary(GameInfo.Strings.ribbons);
             });
 
             // Seed the Trainer Database with enough fake save files so that we return a generation sensitive format when needed.
-            for (int i = 1; i < PKX.Generation; i++)
+            foreach (var game in GameUtil.GameVersions)
             {
                 const string OT = "PKHeX-D";
-                var blankSAV = SaveUtil.GetBlankSAV(i, OT);
+                var blankSAV = SaveUtil.GetBlankSAV(game, OT);
                 TrainerSettings.Register(blankSAV);
             }
 
             var trainer = TrainerSettings.GetSavedTrainerData(7);
-            PKMConverter.SetPrimaryTrainer(trainer);
+            RecentTrainerCache.SetRecentTrainer(trainer);
 
             // Legalizer.AllowBruteForce = false;
 
             // Update Legality Analysis strings
-            LegalityAnalysis.MoveStrings = GameInfo.Strings.movelist;
-            LegalityAnalysis.SpeciesStrings = GameInfo.Strings.specieslist;
+            ParseSettings.ChangeLocalizationStrings(GameInfo.Strings.movelist, GameInfo.Strings.specieslist);
         }
 
         public static async Task ReplyWithLegalizedSetAsync(this ISocketMessageChannel channel, ITrainerInfo sav, ShowdownSet set)
@@ -64,7 +63,7 @@ namespace PKHeX.Discord.Axew
         {
             content = ReusableActions.StripCodeBlock(content);
             var set = new ShowdownSet(content);
-            var sav = TrainerSettings.GetSavedTrainerData(set.Format);
+            var sav = TrainerSettings.GetSavedTrainerData(PKX.Generation);
             await channel.ReplyWithLegalizedSetAsync(sav, set).ConfigureAwait(false);
         }
 
@@ -85,7 +84,7 @@ namespace PKHeX.Discord.Axew
             }
 
             var legal = pkm.Legalize();
-            if (legal == null || !new LegalityAnalysis(legal).Valid)
+            if (!new LegalityAnalysis(legal).Valid)
             {
                 await channel.SendMessageAsync($"{download.SanitizedFileName}: Unable to legalize.").ConfigureAwait(false);
                 return;

@@ -27,7 +27,7 @@ namespace PKHeX.Discord.Axew
 
         public static async Task RepostPKMAsShowdownAsync(this ISocketMessageChannel channel, IAttachment att)
         {
-            if (!PKX.IsPKM(att.Size))
+            if (!EntityDetection.IsSizePlausible(att.Size))
                 return;
             var result = await NetUtil.DownloadPKMAsync(att).ConfigureAwait(false);
             if (!result.Success)
@@ -45,7 +45,7 @@ namespace PKHeX.Discord.Axew
 
         public static string GetFormattedShowdownText(PKM pkm)
         {
-            var showdown = ShowdownSet.GetShowdownText(pkm);
+            var showdown = ShowdownParsing.GetShowdownText(pkm);
             return Format.Code(showdown);
         }
 
