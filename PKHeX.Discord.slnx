@@ -1,0 +1,4 @@
+<Solution>
+  <Project Path="PKHeX.Discord.Axew/PKHeX.Discord.Axew.csproj" />
+  <Project Path="PKHeX.Discord.ConsoleApp/PKHeX.Discord.ConsoleApp.csproj" />
+</Solution>

@@ -1,15 +1,15 @@
 ﻿using System.Threading.Tasks;
-using Discord.Commands;
+using Discord.Interactions;
 
-namespace PKHeX.Discord.Axew
+namespace PKHeX.Discord.Axew;
+
+public class EvolveModule : SlashModuleBase
 {
-    public class EvolveModule : ModuleBase<SocketCommandContext>
+    [SlashCommand("evolve", "Prints Evolution data for the species.")]
+    public async Task PrintDataAsync(
+        [Summary("gen", "Generation")] int gen,
+        [Summary("species", "Species Index")] int species)
     {
-        [Command("evolve"), Alias("evolve")]
-        [Summary("Prints Evolution data for the species.")]
-        public async Task PrintDataAsync([Summary("Generation")]int gen, [Summary("Species Index")]int species)
-        {
-            await ReplyAsync("Sorry, I don't handle this command yet!").ConfigureAwait(false);
-        }
+        await RespondAsync("Sorry, I don't handle this command yet!").ConfigureAwait(false);
     }
 }

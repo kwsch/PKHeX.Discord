@@ -1,89 +1,97 @@
 ﻿using System.Threading.Tasks;
-using Discord.Commands;
+using Discord.Interactions;
 using PKHeX.Core;
 
-namespace PKHeX.Discord.Axew
+namespace PKHeX.Discord.Axew;
+
+[Group("index", "Fetches information about specific Pokémon attributes by index.")]
+public class IndexModule : SlashModuleBase
 {
-    public class IndexModule : ModuleBase<SocketCommandContext>
+    [SlashCommand("move", "Gets information about a move.")]
+    public async Task MoveAsync(
+        [Summary("index", "Move Index")] int index)
     {
-        [Command("move")]
-        [Summary("Gets the name of the requested move integer.")]
-        public async Task GetMoveAsync([Summary("Move Index")]int move)
+        var str = GameInfo.Strings.Move;
+        if ((uint)index >= str.Count)
         {
-            var str = GameInfo.Strings.Move;
-            if ((uint)move >= str.Count)
-                await ReplyAsync($"Move {move} is out of range.").ConfigureAwait(false);
-            else
-                await ReplyAsync(str[move]).ConfigureAwait(false);
+            await RespondAsync($"Move {index} is out of range.").ConfigureAwait(false);
+            return;
         }
+        await RespondAsync(str[index]).ConfigureAwait(false);
+    }
 
-        [Command("item")]
-        [Summary("Gets the name of the requested item integer.")]
-        public async Task GetItemAsync([Summary("Item Index")]int item)
-        {
-            var str = GameInfo.Strings.Item;
-            if ((uint)item >= str.Count)
-                await ReplyAsync($"Item {item} is out of range.").ConfigureAwait(false);
-            else
-                await ReplyAsync(str[item]).ConfigureAwait(false);
-        }
+    [SlashCommand("move-name", "Gets the index of a move by name.")]
+    public async Task MoveNameAsync(
+        [Summary("name", "Move Name")] string name)
+    {
+        var str = GameInfo.Strings.movelist;
+        int index = StringUtil.FindIndexIgnoreCase(str, name);
+        await RespondAsync(index.ToString()).ConfigureAwait(false);
+    }
 
-        [Command("species")]
-        [Summary("Gets the name of the requested species integer.")]
-        public async Task GetSpeciesAsync([Summary("Species Index")]int species)
+    [SlashCommand("item", "Gets information about an item.")]
+    public async Task ItemAsync(
+        [Summary("index", "Item Index")] int index)
+    {
+        var str = GameInfo.Strings.Item;
+        if ((uint)index >= str.Count)
         {
-            var str = GameInfo.Strings.Species;
-            if ((uint)species >= str.Count)
-                await ReplyAsync($"Species {species} is out of range.").ConfigureAwait(false);
-            else
-                await ReplyAsync(str[species]).ConfigureAwait(false);
+            await RespondAsync($"Item {index} is out of range.").ConfigureAwait(false);
+            return;
         }
+        await RespondAsync(str[index]).ConfigureAwait(false);
+    }
 
-        [Command("ability")]
-        [Summary("Gets the name of the requested species integer.")]
-        public async Task GetAbilityAsync([Summary("Ability Index")]int ability)
-        {
-            var str = GameInfo.Strings.Ability;
-            if ((uint)ability >= str.Count)
-                await ReplyAsync($"Ability {ability} is out of range.").ConfigureAwait(false);
-            else
-                await ReplyAsync(str[ability]).ConfigureAwait(false);
-        }
+    [SlashCommand("item-name", "Gets the index of an item by name.")]
+    public async Task ItemNameAsync(
+        [Summary("name", "Item Name")] string name)
+    {
+        var str = GameInfo.Strings.itemlist;
+        int index = StringUtil.FindIndexIgnoreCase(str, name);
+        await RespondAsync(index.ToString()).ConfigureAwait(false);
+    }
 
-        [Command("move")]
-        [Summary("Gets the index of the requested move name.")]
-        public async Task GetMoveAsync([Summary("Move Name")][Remainder]string move)
+    [SlashCommand("species", "Gets information about a species.")]
+    public async Task SpeciesAsync(
+        [Summary("index", "Species Index")] int index)
+    {
+        var str = GameInfo.Strings.Species;
+        if ((uint)index >= str.Count)
         {
-            var str = GameInfo.Strings.movelist;
-            int index = StringUtil.FindIndexIgnoreCase(str, move);
-            await ReplyAsync(index.ToString()).ConfigureAwait(false);
+            await RespondAsync($"Species {index} is out of range.").ConfigureAwait(false);
+            return;
         }
+        await RespondAsync(str[index]).ConfigureAwait(false);
+    }
 
-        [Command("item")]
-        [Summary("Gets the index of the requested item name.")]
-        public async Task GetItemAsync([Summary("Move Name")][Remainder]string item)
-        {
-            var str = GameInfo.Strings.movelist;
-            int index = StringUtil.FindIndexIgnoreCase(str, item);
-            await ReplyAsync(index.ToString()).ConfigureAwait(false);
-        }
+    [SlashCommand("species-name", "Gets the index of a species by name.")]
+    public async Task SpeciesNameAsync(
+        [Summary("name", "Species Name")] string name)
+    {
+        var str = GameInfo.Strings.specieslist;
+        int index = StringUtil.FindIndexIgnoreCase(str, name);
+        await RespondAsync(index.ToString()).ConfigureAwait(false);
+    }
 
-        [Command("species")]
-        [Summary("Gets the index of the requested species name.")]
-        public async Task GetSpeciesAsync([Summary("Species Name")][Remainder]string species)
+    [SlashCommand("ability", "Gets information about an ability.")]
+    public async Task AbilityAsync(
+        [Summary("index", "Ability Index")] int index)
+    {
+        var str = GameInfo.Strings.Ability;
+        if ((uint)index >= str.Count)
         {
-            var str = GameInfo.Strings.specieslist;
-            int index = StringUtil.FindIndexIgnoreCase(str, species);
-            await ReplyAsync(index.ToString()).ConfigureAwait(false);
+            await RespondAsync($"Ability {index} is out of range.").ConfigureAwait(false);
+            return;
         }
+        await RespondAsync(str[index]).ConfigureAwait(false);
+    }
 
-        [Command("ability")]
-        [Summary("Gets the index of the requested ability name.")]
-        public async Task GetAbilityAsync([Summary("Ability Name")][Remainder]string ability)
-        {
-            var str = GameInfo.Strings.abilitylist;
-            int index = StringUtil.FindIndexIgnoreCase(str, ability);
-            await ReplyAsync(index.ToString()).ConfigureAwait(false);
-        }
+    [SlashCommand("ability-name", "Gets the index of an ability by name.")]
+    public async Task AbilityNameAsync(
+        [Summary("name", "Ability Name")] string name)
+    {
+        var str = GameInfo.Strings.abilitylist;
+        int index = StringUtil.FindIndexIgnoreCase(str, name);
+        await RespondAsync(index.ToString()).ConfigureAwait(false);
     }
 }

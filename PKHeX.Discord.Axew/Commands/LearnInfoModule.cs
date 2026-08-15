@@ -1,138 +1,145 @@
 ﻿using System;
-using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using Discord;
-using Discord.Commands;
+using Discord.Interactions;
 using PKHeX.Core;
 
-namespace PKHeX.Discord.Axew
+namespace PKHeX.Discord.Axew;
+
+public class LearnInfoModule : SlashModuleBase
 {
-    public class LearnInfoModule : ModuleBase<SocketCommandContext>
+    private static readonly string[] Splitters = [", ", ","];
+
+    [SlashCommand("learn", "Checks if a Pokémon can learn all of the requested moves.")]
+    public async Task LearnAsync(
+        [Summary("species", "Species name")] string species,
+        [Summary("moves", "Comma-separated move names")] string moves)
     {
-        private static readonly string[] Splitters = {", ", ","};
+        var moveArgs = moves.Split(Splitters, StringSplitOptions.RemoveEmptyEntries);
+        var str = GameInfo.Strings;
 
-        [Command("learn"), Alias("canlearn")]
-        [Summary("Checks if the pkm can learn all of the moves asked.")]
-        public async Task LearnAsync([Remainder][Summary("Separate the species and moves with a comma.")] string speciesAndMoves)
+        if (StringUtil.FindIndexIgnoreCase(str.specieslist, species) < 0)
         {
-            var args = speciesAndMoves.Split(Splitters, StringSplitOptions.RemoveEmptyEntries);
-            var species = args[0];
-
-            // Sanity check
-            var str = GameInfo.Strings;
-            if (StringUtil.FindIndexIgnoreCase(str.specieslist, species) < 0)
-            {
-                await ReplyAsync($"Bad species argument ({species})!").ConfigureAwait(false);
-                return;
-            }
-            foreach (var move in args.Skip(1))
-            {
-                if (StringUtil.FindIndexIgnoreCase(str.movelist, move) >= 0)
-                    continue;
-                await ReplyAsync($"Bad move argument ({move})!").ConfigureAwait(false);
-                return;
-            }
-
-            var summary = EncounterLearn.CanLearn(species, args.Skip(1));
-            var msg = summary
-                ? $"Yep! {species} can learn {string.Join(", ", args.Skip(1))}."
-                : $"Nope, {species} can't learn {string.Join(", ", args.Skip(1))}";
-            await ReplyAsync(msg).ConfigureAwait(false);
+            await RespondAsync($"Bad species argument ({species})!").ConfigureAwait(false);
+            return;
         }
 
-        [Command("encounter"), Alias("find")]
-        [Summary("Returns a list of encounter locations where a pkm can be found, to learn all of the moves asked.")]
-        public async Task EncounterAsync([Remainder][Summary("Separate the species and moves with a comma.")]string speciesAndMoves)
+        foreach (var move in moveArgs)
         {
-            var args = speciesAndMoves.Split(Splitters, StringSplitOptions.RemoveEmptyEntries);
-            var species = args[0];
+            if (StringUtil.FindIndexIgnoreCase(str.movelist, move) >= 0)
+                continue;
 
-            // Sanity check
-            var str = GameInfo.Strings;
-            if (StringUtil.FindIndexIgnoreCase(str.specieslist, species) < 0)
-            {
-                await ReplyAsync($"Bad species argument ({species})!").ConfigureAwait(false);
-                return;
-            }
-            foreach (var move in args.Skip(1))
-            {
-                if (StringUtil.FindIndexIgnoreCase(str.movelist, move) >= 0)
-                    continue;
-                await ReplyAsync($"Bad move argument ({move})!").ConfigureAwait(false);
-                return;
-            }
+            await RespondAsync($"Bad move argument ({move})!").ConfigureAwait(false);
+            return;
+        }
 
-            var summary = EncounterLearn.GetLearnSummary(species, args.Skip(1));
-            var builder = new EmbedBuilder
-            {
-                Color = new Color(114, 137, 218),
-                Description = "Encounters:"
-            };
+        var summary = EncounterLearn.CanLearn(species, moveArgs);
+        var msg = summary
+            ? $"Yep! {species} can learn {string.Join(", ", moveArgs)}."
+            : $"Nope, {species} can't learn {string.Join(", ", moveArgs)}";
 
-            var sb = new StringBuilder();
-            var key = string.Empty;
-            bool any = false;
-            bool capped = false;
-            foreach (var line in summary)
+        await RespondAsync(msg).ConfigureAwait(false);
+    }
+
+    [SlashCommand("encounter", "Returns encounter locations where a Pokémon can be found.")]
+    public async Task EncounterAsync(
+        [Summary("species", "Species name")] string species,
+        [Summary("moves", "Comma-separated move names")] string moves)
+    {
+        var moveArgs = moves.Split(Splitters, StringSplitOptions.RemoveEmptyEntries);
+        var str = GameInfo.Strings;
+
+        if (StringUtil.FindIndexIgnoreCase(str.specieslist, species) < 0)
+        {
+            await RespondAsync($"Bad species argument ({species})!").ConfigureAwait(false);
+            return;
+        }
+
+        foreach (var move in moveArgs)
+        {
+            if (StringUtil.FindIndexIgnoreCase(str.movelist, move) >= 0)
+                continue;
+
+            await RespondAsync($"Bad move argument ({move})!").ConfigureAwait(false);
+            return;
+        }
+
+        var summary = EncounterLearn.GetLearnSummary(species, moveArgs);
+        var builder = new EmbedBuilder
+        {
+            Color = new Color(114, 137, 218),
+            Description = "Encounters:"
+        };
+
+        var sb = new StringBuilder();
+        var key = string.Empty;
+        bool any = false;
+        bool capped = false;
+
+        foreach (var line in summary)
+        {
+            if (line.StartsWith('='))
             {
-                if (line.StartsWith("="))
+                any = true;
+                if (sb.Length > 0)
                 {
-                    any = true;
-                    if (sb.Length > 0)
+                    var key1 = key;
+                    var msg = sb.ToString();
+
+                    builder.AddField(x =>
                     {
-                        var key1 = key;
-                        var msg = sb.ToString();
-                        builder.AddField(x =>
-                        {
-                            x.Name = key1;
-                            x.Value = msg;
-                            x.IsInline = false;
-                        });
-                    }
-                    key = line.Replace("=", "");
-                    capped = false;
-                    sb.Clear();
-                    continue;
+                        x.Name = key1;
+                        x.Value = msg;
+                        x.IsInline = false;
+                    });
                 }
 
-                if (sb.Length > 850 && !capped)
-                {
-                    capped = true;
-                    sb.AppendLine( "...and more! Too long to show all.");
-                }
-                else if (!capped)
-                {
-                    sb.AppendLine(line);
-                }
+                key = line.Replace("=", "");
+                capped = false;
+                sb.Clear();
+
+                continue;
             }
 
-            if (!any)
+            if (sb.Length > 850 && !capped)
             {
-                var fail = $"Sorry, can't find {species}";
-                if (args.Length > 1)
-                    fail += $" with {string.Join(", ", args.Skip(1))}.";
-                await ReplyAsync(fail).ConfigureAwait(false);
-                return;
+                capped = true;
+                sb.AppendLine("...and more! Too long to show all.");
             }
-
-            if (sb.Length > 0)
+            else if (!capped)
             {
-                var key1 = key;
-                var msg = sb.ToString();
-                builder.AddField(x =>
-                {
-                    x.Name = key1;
-                    x.Value = msg;
-                    x.IsInline = false;
-                });
+                sb.AppendLine(line);
             }
-
-            var response = $"Here's where you can find {species}";
-            if (args.Length > 1)
-                response += $" with {string.Join(", ", args.Skip(1))}";
-
-            await ReplyAsync(response + ":", false, builder.Build()).ConfigureAwait(false);
         }
+
+        if (!any)
+        {
+            var fail = $"Sorry, can't find {species}";
+            if (moveArgs.Length > 0)
+                fail += $" with {string.Join(", ", moveArgs)}.";
+
+            await RespondAsync(fail).ConfigureAwait(false);
+            return;
+        }
+
+        if (sb.Length > 0)
+        {
+            var key1 = key;
+            var msg = sb.ToString();
+
+            builder.AddField(x =>
+            {
+                x.Name = key1;
+                x.Value = msg;
+                x.IsInline = false;
+            });
+        }
+
+        var response = $"Here's where you can find {species}";
+        if (moveArgs.Length > 0)
+            response += $" with {string.Join(", ", moveArgs)}";
+
+        await RespondAsync(response + ":", embed: builder.Build()).ConfigureAwait(false);
     }
 }

@@ -3,49 +3,50 @@ using System.Threading.Tasks;
 using Discord;
 using PKHeX.Core;
 
-namespace PKHeX.Discord.Axew
+namespace PKHeX.Discord.Axew;
+
+public static class NetUtil
 {
-    public static class NetUtil
+    private static readonly HttpClient Client = new();
+
+    public static async Task<byte[]> DownloadFromUrlAsync(string url)
     {
-        private static readonly HttpClient httpClient = new();
+        return await Client.GetByteArrayAsync(url).ConfigureAwait(false);
+    }
 
-        public static async Task<byte[]> DownloadFromUrlAsync(string url)
+    public static async Task<Download<PKM>> DownloadEntityAsync(this IAttachment att)
+    {
+        var result = new Download<PKM> { SanitizedFileName = Format.Sanitize(att.Filename) };
+        if (!EntityDetection.IsSizePlausible(att.Size))
         {
-            return await httpClient.GetByteArrayAsync(url).ConfigureAwait(false);
-        }
-
-        public static async Task<Download<PKM>> DownloadPKMAsync(IAttachment att)
-        {
-            var result = new Download<PKM> { SanitizedFileName = Format.Sanitize(att.Filename) };
-            if (!EntityDetection.IsSizePlausible(att.Size))
-            {
-                result.ErrorMessage = $"{result.SanitizedFileName}: Invalid size.";
-                return result;
-            }
-
-            string url = att.Url;
-
-            // Download the resource and load the bytes into a buffer.
-            var buffer = await DownloadFromUrlAsync(url).ConfigureAwait(false);
-            var prefer = EntityFileExtension.GetContextFromExtension(result.SanitizedFileName);
-            var pkm = EntityFormat.GetFromBytes(buffer, prefer);
-            if (pkm == null)
-            {
-                result.ErrorMessage = $"{result.SanitizedFileName}: Invalid pkm attachment.";
-                return result;
-            }
-
-            result.Data = pkm;
-            result.Success = true;
+            result.ErrorMessage = $"{result.SanitizedFileName}: Invalid size.";
             return result;
         }
-    }
 
-    public sealed class Download<T>
-    {
-        public bool Success;
-        public T Data = default!;
-        public string SanitizedFileName = string.Empty;
-        public string ErrorMessage = string.Empty;
+        string url = att.Url;
+
+        // Download the resource and load the bytes into a buffer.
+        var buffer = await DownloadFromUrlAsync(url).ConfigureAwait(false);
+
+        // Ensure it actually converts into a file we can use.
+        var prefer = EntityFileExtension.GetContextFromExtension(result.SanitizedFileName);
+        var pkm = EntityFormat.GetFromBytes(buffer, prefer);
+        if (pkm == null)
+        {
+            result.ErrorMessage = $"{result.SanitizedFileName}: Invalid pkm attachment.";
+            return result;
+        }
+
+        result.Data = pkm;
+        result.Success = true;
+        return result;
     }
+}
+
+public sealed class Download<T> where T : class
+{
+    public bool Success;
+    public T? Data;
+    public string? SanitizedFileName;
+    public string? ErrorMessage;
 }

@@ -1,54 +1,163 @@
-﻿using System.IO;
+﻿using System;
+using System.Collections.Generic;
+using System.IO;
+using System.Linq;
 using System.Threading.Tasks;
 using Discord;
-using Discord.WebSocket;
 using PKHeX.Core;
-using Image = System.Drawing.Image;
-using ImageFormat = System.Drawing.Imaging.ImageFormat;
 
-namespace PKHeX.Discord.Axew
+namespace PKHeX.Discord.Axew;
+
+public static class ReusableActions
 {
-    public static class ReusableActions
+    public static string GetModuleName(string name)
     {
-        public static async Task SendPKMAsync(this ISocketMessageChannel channel, PKM pkm, string msg = "")
+        name = name.Replace("Module", "");
+        // Trim off any generic type parameters (e.g., `1, `2) from the name for comparison purposes.
+        var gen = name.IndexOf('`');
+        if (gen != -1)
+            name = name[..gen];
+        return name;
+    }
+
+
+    extension(IMessageChannel channel)
+    {
+        public async Task SendFileAsync(PKM pkm, string message = "", Embed? embed = null)
         {
-            var tmp = Path.Combine(Path.GetTempPath(), Util.CleanFileName(pkm.FileName));
-            File.WriteAllBytes(tmp, pkm.DecryptedPartyData);
-            await channel.SendFileAsync(tmp, msg).ConfigureAwait(false);
-            File.Delete(tmp);
+            var attach = pkm.ToFileAttachment();
+            await channel.SendFileAsync(attach, message, embed: embed).ConfigureAwait(false);
         }
 
-        public static async Task SendImageAsync(this ISocketMessageChannel channel, Image finalQR, string msg = "")
+        public async Task InterpretAttachmentAsSetAndReply(IAttachment attachment)
         {
-            const string fn = "tmp.png";
-            finalQR.Save(fn, ImageFormat.Png);
-            await channel.SendFileAsync(fn, msg).ConfigureAwait(false);
+            var download = await attachment.DownloadEntityAsync().ConfigureAwait(false);
+            if (!download.Success)
+                return; // silently ignore
+
+            var pk = download.Data!;
+            var paste = GetFormattedShowdownText(pk);
+            await channel.SendMessageAsync(paste).ConfigureAwait(false);
+        }
+    }
+
+    extension(IInteractionContext context)
+    {
+        public async Task SendFileAsync(PKM pk, string message = "", Embed? embed = null)
+            => await context.SendFileAsync([pk], message, embed).ConfigureAwait(false);
+        public async Task SendFileAsync(IEnumerable<PKM> list, string message = "", Embed? embed = null)
+        {
+            var attach = list.Select(ToFileAttachment);
+            var interaction = context.Interaction;
+            var task = interaction.HasResponded
+                ? interaction.FollowupWithFilesAsync(attach, message, embed: embed)
+                : interaction.RespondWithFilesAsync(attach, message, embed: embed);
+            await task.ConfigureAwait(false);
         }
 
-        public static async Task RepostPKMAsShowdownAsync(this ISocketMessageChannel channel, IAttachment att)
-        {
-            if (!EntityDetection.IsSizePlausible(att.Size))
-                return;
-            var result = await NetUtil.DownloadPKMAsync(att).ConfigureAwait(false);
-            if (!result.Success)
-                return;
+        public async Task SendFilePrivatelyAsync(PKM pk, string message = "", Embed? embed = null)
+            => await context.SendFilePrivatelyAsync([pk], message, embed).ConfigureAwait(false);
 
-            var pkm = result.Data;
-            await channel.SendPKMAsShowdownSetAsync(pkm).ConfigureAwait(false);
+        public async Task SendFilePrivatelyAsync(IEnumerable<PKM> list, string message = "", Embed? embed = null)
+        {
+            var user = context.Interaction.User;
+            var attach = list.Select(ToFileAttachment);
+            await user.SendFilesAsync(attach, message, embed: embed).ConfigureAwait(false);
         }
 
-        public static async Task SendPKMAsShowdownSetAsync(this ISocketMessageChannel channel, PKM pkm)
+        public async Task InterpretAttachmentAsSetAndReply(IAttachment attachment)
         {
-            var txt = GetFormattedShowdownText(pkm);
-            await channel.SendMessageAsync(txt).ConfigureAwait(false);
-        }
+            var download = await attachment.DownloadEntityAsync().ConfigureAwait(false);
+            if (!download.Success)
+                return; // silently ignore
 
-        public static string GetFormattedShowdownText(PKM pkm)
+            var pk = download.Data!;
+            var paste = GetFormattedShowdownText(pk);
+            await context.Interaction.RespondAsync(paste).ConfigureAwait(false);
+        }
+    }
+
+    extension(PKM pk)
+    {
+        public FileAttachment ToFileAttachment()
         {
-            var showdown = ShowdownParsing.GetShowdownText(pkm);
-            return Format.Code(showdown);
-        }
+            Span<byte> data = stackalloc byte[pk.SIZE_PARTY];
+            pk.WriteDecryptedDataParty(data);
+            var result = data.ToArray();
 
-        public static string StripCodeBlock(string str) => str.Replace("`\n", "").Replace("\n`", "").Replace("`", "").Trim();
+            // No need to save it to the host disk, can just send it directly from memory.
+            var stream = new MemoryStream(result);
+            var fileName = PathUtil.CleanFileName(pk.FileName);
+            return new FileAttachment(stream, fileName);
+        }
+    }
+
+    public static string GetFormattedShowdownText(PKM pk, LanguageID displayLanguage = LanguageID.English)
+    {
+        var config = BattleTemplateConfig.Showdown;
+
+        var settings = new BattleTemplateExportSettings(config, displayLanguage);
+        var showdown = ShowdownParsing.GetShowdownText(pk, settings);
+
+        return FormatSetCode(showdown);
+    }
+
+    // yml looks nicest of all code-languages in Discord code blocks, so we use that instead of plain text.
+    private const string CodeLanguage = "yml";
+    private const LanguageID Language = LanguageID.English;
+
+    public static string FormatSetCode(string set) => Format.Code(set, CodeLanguage);
+    public static string FormatSetCode(IEnumerable<string> lines) => FormatSetCode(string.Join('\n', lines));
+    public static string FormatSetCode(ShowdownSet set, LanguageID displayLanguage = Language)
+    {
+        var config = BattleTemplateConfig.Showdown;
+        var settings = new BattleTemplateExportSettings(config, displayLanguage);
+        var lines = set.GetSetLines(settings);
+        return FormatSetCode(lines);
+    }
+
+    public static string FormatSetCode<T>(T trade, LanguageID language = Language) where T : PKM
+    {
+        var localization = BattleTemplateLocalization.GetLocalization(Language);
+        var set = new ShowdownSet(trade, localization);
+        return FormatSetCode(set, language);
+    }
+
+    /// <summary>
+    /// Removes the Discord code formatting.
+    /// </summary>
+    public static string StripCodeBlock(string message) => message
+        .Replace("`\n", "")
+        .Replace("\n`", "")
+        .Replace("`", "")
+        .Trim();
+}
+
+public static class PersonalColorExtensions
+{
+    private static readonly Dictionary<PersonalColor, Color> Map = new()
+    {
+        [PersonalColor.Red] = new Color(0xE5, 0x3D, 0x3D),
+        [PersonalColor.Blue] = new Color(0x3D, 0x7D, 0xE5),
+        [PersonalColor.Yellow] = new Color(0xE5, 0xD3, 0x3D),
+        [PersonalColor.Green] = new Color(0x4C, 0xAF, 0x50),
+        [PersonalColor.Black] = new Color(0x2C, 0x2C, 0x2C),
+        [PersonalColor.Brown] = new Color(0x8D, 0x5B, 0x3D),
+        [PersonalColor.Purple] = new Color(0x9B, 0x59, 0xB6),
+        [PersonalColor.Gray] = new Color(0x95, 0xA5, 0xA6),
+        [PersonalColor.White] = new Color(0xEC, 0xF0, 0xF1),
+        [PersonalColor.Pink] = new Color(0xE9, 0x1E, 0x8C),
+    };
+
+    extension(PKM pk)
+    {
+        public Color ToDiscordColor() =>
+            Map.TryGetValue((PersonalColor)pk.PersonalInfo.Color, out var c) ? c : Color.Default;
+    }
+
+    extension(PersonalColor color)
+    {
+        public Color ToDiscordColor() =>
+            Map.TryGetValue(color, out var c) ? c : Color.Default;
     }
 }
